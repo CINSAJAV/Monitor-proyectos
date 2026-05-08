@@ -11,6 +11,36 @@
   <meta name="apple-mobile-web-app-title" content="CINSA" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
+    /* ── Login ── */
+    .login-overlay {
+      position: fixed; inset: 0; background: #0f1117;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; flex-direction: column;
+    }
+    .login-box {
+      background: #1a1d27; border: 1px solid #2e3450;
+      border-radius: 16px; padding: 40px; width: 360px; max-width: 95vw;
+    }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .login-logo h1 { font-size: 20px; font-weight: 800; color: #4f8ef7; margin-top: 12px; }
+    .login-logo span { font-size: 12px; color: #8892a4; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label { display: block; font-size: 11px; font-weight: 600;
+      color: #8892a4; text-transform: uppercase; margin-bottom: 6px; }
+    .login-field input {
+      width: 100%; background: #0f1117; border: 1px solid #2e3450;
+      color: #e2e8f0; padding: 11px 14px; border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+    }
+    .login-field input:focus { outline: none; border-color: #4f8ef7; }
+    .login-btn {
+      width: 100%; background: #4f8ef7; color: #fff; border: none;
+      padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700;
+      cursor: pointer; margin-top: 8px; transition: background .2s;
+    }
+    .login-btn:hover { background: #3a7aee; }
+    .login-error { color: #ef4444; font-size: 12px; margin-top: 10px; text-align: center; display: none; }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -182,6 +212,29 @@
   </style>
 </head>
 <body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="icon-192.png" width="64" style="border-radius:12px" />
+      <h1>Monitor de Proyectos</h1>
+      <span>Grupo CINSA</span>
+    </div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="Tu usuario" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="Tu contraseña" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
 <div class="layout">
 
   <!-- Sidebar -->
@@ -934,8 +987,42 @@ document.getElementById('modal-new').addEventListener('click', e => { if(e.targe
 document.getElementById('modal-detail').addEventListener('click', e => { if(e.target===e.currentTarget) closeDetail(); });
 
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+const USUARIOS = {
+  'javier':    'Cinsa@2025',
+  'natalia':   'Nat#Cinsa25',
+  'carlos':    'Car#Cinsa25',
+  'matias':    'Mat#Cinsa25',
+  'guillermo': 'Guill@2025',
+  'yasna':     'Yas#Cinsa25'
+};
+
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  if (USUARIOS[user] && USUARIOS[user] === pass) {
+    sessionStorage.setItem('cinsa-auth', user);
+    document.getElementById('login-overlay').style.display = 'none';
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+function checkAuth() {
+  const auth = sessionStorage.getItem('cinsa-auth');
+  if (!auth) {
+    document.getElementById('login-overlay').style.display = 'flex';
+  } else {
+    document.getElementById('login-overlay').style.display = 'none';
+  }
+}
+
 // INIT
 // ══════════════════════════════════════════════════════
+checkAuth();
 renderDashboard();
 
 if ('serviceWorker' in navigator) {
