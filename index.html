@@ -668,7 +668,7 @@ function renderProyectos() {
       <td>${progressBar(p.avance)}</td>
       <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
       <td><span class="badge ${pf>=100?'badge-green':pf>=70?'badge-blue':'badge-yellow'}">${pf}%</span></td>
-      <td style="color:${sf>0?'var(--accent-red)':'var(--text-muted)';}">${fmtCLP(sf)}</td>
+      <td style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</td>
       <td>${estadoBadge(p.estado)}</td>
       <td><button class="btn btn-outline btn-sm" onclick="openDetail(${p.id})">Ver</button></td>
     </tr>`;
