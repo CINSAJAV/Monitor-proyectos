@@ -107,7 +107,7 @@
     .view.active { display: block; }
 
     /* ── KPI Cards ── */
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 22px; }
     .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
     .kpi-card .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
     .kpi-card .value { font-size: 22px; font-weight: 800; line-height: 1; }
@@ -200,9 +200,21 @@
     /* ── Totals row ── */
     .totals-row td { font-weight: 700; background: rgba(79,142,247,.07); border-top: 2px solid var(--accent-blue) !important; }
 
+    /* ── Dual progress bar ── */
+    .prog-dual { min-width: 130px; }
+    .prog-dual .prog-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--text-muted); margin-bottom:3px; }
+    .prog-dual .prog-bar-thin { height:5px; border-radius:3px; background:var(--border); overflow:hidden; margin-bottom:2px; }
+    .prog-dual .prog-bar-thin .fill { height:100%; border-radius:3px; transition:width .4s; }
+    .prog-dual .prog-legend { display:flex; gap:8px; font-size:9px; color:var(--text-muted); }
+    .prog-dual .prog-legend span { display:flex; align-items:center; gap:3px; }
+    .prog-dual .dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+
+    /* ── Retraso badge ── */
+    .badge-orange { background: rgba(249,115,22,.15); color: var(--accent-orange); }
+
     @media (max-width: 900px) {
       .sidebar { display: none; }
-      .kpi-grid { grid-template-columns: repeat(2,1fr); }
+      .kpi-grid { grid-template-columns: repeat(3,1fr); }
       .charts-row { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
@@ -304,8 +316,8 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Proyecto</th><th>Tipo</th><th>Avance</th>
-            <th>Contrato Neto</th><th>Facturado</th><th>Saldo x Facturar</th><th>Estado</th>
+            <th>Proyecto</th><th>Tipo</th><th>Prog. vs Real</th>
+            <th>Contrato Neto</th><th>Facturado</th><th>Saldo x Facturar</th><th>Término</th>
           </tr></thead>
           <tbody id="tbody-dashboard"></tbody>
         </table>
@@ -393,8 +405,8 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Año</th><th>ID Contrato</th><th>Proyecto</th><th>Tipo</th><th>% Avance</th>
-            <th>Contrato Neto</th><th>Facturado</th><th>Saldo Ganado x Fact.</th><th>Estado</th>
+            <th>Proyecto</th><th>Tipo</th><th>Unidades</th><th>Prog. vs Real</th>
+            <th>Inicio</th><th>Término</th><th>Contrato Neto</th><th>Facturado</th><th>Saldo x Fact.</th>
           </tr></thead>
           <tbody id="tbody-activos"></tbody>
         </table>
@@ -477,31 +489,31 @@
 <script>
 // ══════════════════════════════════════════════════════
 // DATOS REALES — Dashboard Proyectos.xlsx (Grupo CINSA)
-// Última actualización: 2026-05-07
+// Última actualización: 2026-05-09
 // ══════════════════════════════════════════════════════
 let proyectos = [
-  { id:1,  anio:2023, ncontrato:'3824-37-LR23',     nombre:'Padre Hurtado',       tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',     contrato:1631127731, facturado:1631127731, avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:2,  anio:2023, ncontrato:'3211-14-LQ23',     nombre:'Collipulli',          tipo:'luminaria', estado:'completado', ubicacion:'Collipulli',        contrato:257559069,  facturado:257559069,  avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:3,  anio:2024, ncontrato:'2582-74-LR23',     nombre:'Santiago',            tipo:'luminaria', estado:'completado', ubicacion:'Santiago',           contrato:250682919,  facturado:250682920,  avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:4,  anio:2024, ncontrato:'3824-11-LQ24',     nombre:'Padre Hurtado II',    tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',     contrato:37274400,   facturado:37274400,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:5,  anio:2024, ncontrato:'3775-16-LR24',     nombre:'Hijuelas',            tipo:'camara',    estado:'completado', ubicacion:'Hijuelas',           contrato:357708414,  facturado:357708414,  avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:6,  anio:2024, ncontrato:'2483-136-LP24',    nombre:'Quilicura',           tipo:'poste',     estado:'completado', ubicacion:'Quilicura',          contrato:59094160,   facturado:59094160,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:7,  anio:2024, ncontrato:'2775-36-LE24',     nombre:'Rengo',               tipo:'poste',     estado:'completado', ubicacion:'Rengo',              contrato:39495016,   facturado:39495016,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:8,  anio:2024, ncontrato:'2483-309-LQ24',    nombre:'Quilicura II',        tipo:'poste',     estado:'completado', ubicacion:'Quilicura',          contrato:129999990,  facturado:129999990,  avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:9,  anio:2024, ncontrato:'5482-4-LR24',      nombre:'Ñuñoa',               tipo:'luminaria', estado:'completado', ubicacion:'Ñuñoa',              contrato:706649958,  facturado:706649958,  avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:10, anio:2024, ncontrato:'4290-29-LE24',     nombre:'Limache',             tipo:'camara',    estado:'completado', ubicacion:'Limache',            contrato:50420164,   facturado:50420164,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:11, anio:2024, ncontrato:'2211-171-COT25',   nombre:'AG Limache',          tipo:'camara',    estado:'completado', ubicacion:'Limache',            contrato:260000,     facturado:260000,     avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:12, anio:2024, ncontrato:'2392-9-LQ24',      nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda',contrato:166926579,  facturado:166926578,  avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:13, anio:2024, ncontrato:'Privado',           nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',           contrato:89202933,   facturado:89202933,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:14, anio:2025, ncontrato:'2430-32-LR24',     nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',        contrato:2360725400, facturado:750000000,  avance:95,  inicio:'—', termino:'—', plazo:null },
-  { id:15, anio:2024, ncontrato:'2490-70-LR24',     nombre:'Providencia',         tipo:'camara',    estado:'activo',     ubicacion:'Providencia',        contrato:479800000,  facturado:145445069,  avance:96,  inicio:'—', termino:'—', plazo:null },
-  { id:16, anio:2024, ncontrato:'4160-23-LR24',     nombre:'Hualpén',             tipo:'luminaria', estado:'completado', ubicacion:'Hualpén',            contrato:2597763601, facturado:2597763601, avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:17, anio:2024, ncontrato:'2490-87-LE24',     nombre:'Providencia II',      tipo:'camara',    estado:'completado', ubicacion:'Providencia',        contrato:43000000,   facturado:34025883,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:18, anio:2024, ncontrato:'Privado',           nombre:'Nevados de Chillán',  tipo:'luminaria', estado:'completado', ubicacion:'Chillán',            contrato:34649370,   facturado:34649370,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:19, anio:2025, ncontrato:'4726-1-LP25',      nombre:'UMCE',                tipo:'luminaria', estado:'completado', ubicacion:'Santiago',           contrato:81700769,   facturado:81700769,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:20, anio:2025, ncontrato:'2369-70-LR24',     nombre:'Arica',               tipo:'luminaria', estado:'activo',     ubicacion:'Arica',              contrato:952929114,  facturado:285535954,  avance:61,  inicio:'—', termino:'—', plazo:180 },
-  { id:21, anio:2025, ncontrato:'4459-27-LR24',     nombre:'Pichilemu',           tipo:'luminaria', estado:'completado', ubicacion:'Pichilemu',          contrato:70000000,   facturado:70000000,   avance:100, inicio:'—', termino:'—', plazo:null },
-  { id:22, anio:2025, ncontrato:'—',                nombre:'Calama',              tipo:'luminaria', estado:'activo',     ubicacion:'Calama',             contrato:800000000,  facturado:0,          avance:0,   inicio:'—', termino:'—', plazo:null },
+  { id:1,  anio:2023, ncontrato:'3824-37-LR23',  nombre:'Padre Hurtado',       tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:1631127731, facturado:1631127731, avance:100, avanceProg:100, unidades:4000, plazo:235, inicio:'2023-11-24', termino:'2024-07-16' },
+  { id:2,  anio:2023, ncontrato:'3211-14-LQ23',  nombre:'Collipulli',          tipo:'luminaria', estado:'completado', ubicacion:'Collipulli',         contrato:257559069,  facturado:257559069,  avance:100, avanceProg:100, unidades:236,  plazo:345, inicio:'2024-01-15', termino:'2024-12-25' },
+  { id:3,  anio:2024, ncontrato:'2582-74-LR23',  nombre:'Santiago',            tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:250682919,  facturado:250682920,  avance:100, avanceProg:100, unidades:123,  plazo:185, inicio:'2024-09-02', termino:'2025-03-06' },
+  { id:4,  anio:2024, ncontrato:'3824-11-LQ24',  nombre:'Padre Hurtado II',    tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:37274400,   facturado:37274400,   avance:100, avanceProg:100, unidades:20,   plazo:60,  inicio:'2024-09-12', termino:'2024-11-11' },
+  { id:5,  anio:2024, ncontrato:'3775-16-LR24',  nombre:'Hijuelas',            tipo:'camara',    estado:'completado', ubicacion:'Hijuelas',            contrato:357708414,  facturado:357708414,  avance:100, avanceProg:100, unidades:17,   plazo:158, inicio:'2025-03-24', termino:'2025-08-29' },
+  { id:6,  anio:2024, ncontrato:'2483-136-LP24', nombre:'Quilicura',           tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:59094160,   facturado:59094160,   avance:100, avanceProg:100, unidades:4,    plazo:72,  inicio:'2024-06-27', termino:'2024-09-07' },
+  { id:7,  anio:2024, ncontrato:'2775-36-LE24',  nombre:'Rengo',               tipo:'poste',     estado:'completado', ubicacion:'Rengo',               contrato:39495016,   facturado:39495016,   avance:100, avanceProg:100, unidades:5,    plazo:91,  inicio:'2024-08-01', termino:'2024-10-31' },
+  { id:8,  anio:2024, ncontrato:'2483-309-LQ24', nombre:'Quilicura II',        tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:129999990,  facturado:129999990,  avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-10-11', termino:'2025-01-17' },
+  { id:9,  anio:2024, ncontrato:'5482-4-LR24',   nombre:'Ñuñoa',               tipo:'luminaria', estado:'completado', ubicacion:'Ñuñoa',               contrato:706649958,  facturado:706649958,  avance:100, avanceProg:100, unidades:1768, plazo:198, inicio:'2024-05-08', termino:'2024-11-22' },
+  { id:10, anio:2024, ncontrato:'4290-29-LE24',  nombre:'Limache',             tipo:'camara',    estado:'completado', ubicacion:'Limache',             contrato:50420164,   facturado:50420164,   avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-08-13', termino:'2024-11-19' },
+  { id:11, anio:2024, ncontrato:'2392-9-LQ24',   nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579,  facturado:166926578,  avance:100, avanceProg:100, unidades:274,  plazo:90,  inicio:'2024-07-18', termino:'2024-10-16' },
+  { id:12, anio:2024, ncontrato:'Privado',        nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',            contrato:89202933,   facturado:89202933,   avance:100, avanceProg:100, unidades:16,   plazo:145, inicio:'2024-07-04', termino:'2024-11-26' },
+  { id:13, anio:2025, ncontrato:'2430-32-LR24',  nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',         contrato:2360725400, facturado:750000000,  avance:95,  avanceProg:100, unidades:100,  plazo:287, inicio:'2025-07-21', termino:'2026-05-04' },
+  { id:14, anio:2024, ncontrato:'2490-70-LR24',  nombre:'Providencia',         tipo:'camara',    estado:'activo',     ubicacion:'Providencia',         contrato:479800000,  facturado:145445069,  avance:96,  avanceProg:100, unidades:34,   plazo:310, inicio:'2025-03-17', termino:'2026-01-21' },
+  { id:15, anio:2024, ncontrato:'4160-23-LR24',  nombre:'Hualpén',             tipo:'luminaria', estado:'completado', ubicacion:'Hualpén',             contrato:2597763601, facturado:2597763601, avance:100, avanceProg:100, unidades:7560, plazo:131, inicio:'2025-04-01', termino:'2025-08-10' },
+  { id:16, anio:2024, ncontrato:'2490-87-LE24',  nombre:'Providencia II',      tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:43000000,   facturado:34025883,   avance:100, avanceProg:100, unidades:14,   plazo:98,  inicio:'2025-04-14', termino:'2025-07-21' },
+  { id:17, anio:2024, ncontrato:'Privado',        nombre:'Nevados de Chillán',  tipo:'luminaria', estado:'completado', ubicacion:'Chillán',             contrato:34649370,   facturado:34649370,   avance:100, avanceProg:100, unidades:63,   plazo:43,  inicio:'2025-03-26', termino:'2025-05-08' },
+  { id:18, anio:2025, ncontrato:'4726-1-LP25',   nombre:'UMCE',                tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:81700769,   facturado:81700769,   avance:100, avanceProg:100, unidades:144,  plazo:91,  inicio:'2025-05-22', termino:'2025-08-21' },
+  { id:19, anio:2025, ncontrato:'2369-70-LR24',  nombre:'Arica',               tipo:'luminaria', estado:'activo',     ubicacion:'Arica',               contrato:952929114,  facturado:285535954,  avance:61,  avanceProg:79,  unidades:689,  plazo:289, inicio:'2025-09-24', termino:'2026-07-10' },
+  { id:20, anio:2025, ncontrato:'4459-27-LR24',  nombre:'Pichilemu',           tipo:'luminaria', estado:'activo',     ubicacion:'Pichilemu',           contrato:70000000,   facturado:70000000,   avance:82,  avanceProg:100, unidades:2255, plazo:90,  inicio:'2025-11-13', termino:'2026-02-11' },
+  { id:21, anio:2026, ncontrato:'2384-41-LR25',  nombre:'Calama',              tipo:'luminaria', estado:'activo',     ubicacion:'Calama',              contrato:800000000,  facturado:0,          avance:0,   avanceProg:0,   unidades:144,  plazo:180, inicio:'2026-05-18', termino:'2026-11-14' },
+  { id:22, anio:2026, ncontrato:'2581-32-LR25',  nombre:'Conchalí',            tipo:'luminaria', estado:'activo',     ubicacion:'Conchalí',            contrato:1251426033, facturado:0,          avance:0,   avanceProg:0,   unidades:5000, plazo:240, inicio:'2026-05-25', termino:'2027-01-20' },
 ];
 
 // ══════════════════════════════════════════════════════
@@ -534,6 +546,26 @@ function progressBar(v) {
     <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(v,100)}%;background:${c}"></div></div>
     <div class="progress-label">${v}%</div>
   </div>`;
+}
+function progressBarDual(real, prog) {
+  const atrasado = prog > 0 && real < prog;
+  const cr = atrasado ? '#ef4444' : '#22c55e';
+  return `<div class="prog-dual">
+    <div class="prog-labels"><span>Prog: ${prog}%</span><span>Real: ${real}%</span></div>
+    <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(prog,100)}%;background:#4f8ef7"></div></div>
+    <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(real,100)}%;background:${cr}"></div></div>
+  </div>`;
+}
+function fmtFecha(d) {
+  if (!d || d === '—') return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+function diasRestantes(termino) {
+  if (!termino || termino === '—') return null;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const fin = new Date(termino);
+  return Math.ceil((fin - hoy) / 86400000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -614,6 +646,8 @@ function renderDashboard() {
   const activos        = ps.filter(p=>p.estado==='activo');
   const avgAvance      = activos.length ? Math.round(activos.reduce((a,p)=>a+p.avance,0)/activos.length) : 0;
 
+  const conRetraso = activos.filter(p => p.avanceProg > 0 && p.avance < p.avanceProg).length;
+
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-card blue">
       <div class="label">Total Proyectos</div>
@@ -624,6 +658,11 @@ function renderDashboard() {
       <div class="label">Avance Prom. (activos)</div>
       <div class="value">${avgAvance}%</div>
       <div class="sub">${activos.length} proyectos activos</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Con Retraso</div>
+      <div class="value">${conRetraso}</div>
+      <div class="sub">real < programado</div>
     </div>
     <div class="kpi-card green">
       <div class="label">Total Facturado</div>
@@ -639,17 +678,23 @@ function renderDashboard() {
 
   // Tabla activos
   const actList = ps.filter(p=>p.estado==='activo');
-  document.getElementById('tbody-dashboard').innerHTML = actList.map(p => `
-    <tr onclick="openDetail(${p.id})" style="cursor:pointer">
+  document.getElementById('tbody-dashboard').innerHTML = actList.map(p => {
+    const dr = diasRestantes(p.termino);
+    const drLabel = dr === null ? '—' : dr < 0
+      ? `<span style="color:var(--accent-red)">Vencido ${Math.abs(dr)}d</span>`
+      : dr <= 30
+        ? `<span style="color:var(--accent-orange)">${dr}d restantes</span>`
+        : `<span style="color:var(--text-muted)">${dr}d · ${fmtFecha(p.termino)}</span>`;
+    return `<tr onclick="openDetail(${p.id})" style="cursor:pointer">
       <td><strong>${p.nombre}</strong><br><small style="color:var(--text-muted)">${p.ncontrato}</small></td>
       <td>${tipoTag(p.tipo)}</td>
-      <td>${progressBar(p.avance)}</td>
+      <td>${progressBarDual(p.avance, p.avanceProg)}</td>
       <td>${fmtCLP(p.contrato)}</td>
       <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
       <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldoFacturable(p))}</td>
-      <td>${estadoBadge(p.estado)}</td>
-    </tr>
-  `).join('') || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin proyectos activos</td></tr>`;
+      <td style="font-size:11px">${drLabel}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin proyectos activos</td></tr>`;
 
   // Chart avance por tipo
   const grupos = ['luminaria','camara','poste'];
@@ -791,18 +836,27 @@ function renderEstadoTable(tbodyId, estado) {
 
   let rows = '';
   if (estado === 'activo') {
-    rows = ps.map(p => `<tr>
-      <td style="color:var(--text-muted)">${p.anio}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${p.ncontrato}</td>
-      <td><strong style="cursor:pointer;color:var(--accent-blue)" onclick="openDetail(${p.id})">${p.nombre}</strong><br>
-        <small style="color:var(--text-muted)">${p.ubicacion}</small></td>
-      <td>${tipoTag(p.tipo)}</td>
-      <td>${progressBar(p.avance)}</td>
-      <td>${fmtCLP(p.contrato)}</td>
-      <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
-      <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldoFacturable(p))}</td>
-      <td>${estadoBadge(p.estado)}</td>
-    </tr>`).join('');
+    rows = ps.map(p => {
+      const dr = diasRestantes(p.termino);
+      const atrasado = p.avanceProg > 0 && p.avance < p.avanceProg;
+      const drStyle = dr !== null && dr < 0 ? 'color:var(--accent-red)' : dr !== null && dr <= 30 ? 'color:var(--accent-orange)' : 'color:var(--text-muted)';
+      const drText  = dr === null ? '—' : dr < 0 ? `Vencido ${Math.abs(dr)}d` : `${dr}d · ${fmtFecha(p.termino)}`;
+      return `<tr>
+        <td>
+          <strong style="cursor:pointer;color:var(--accent-blue)" onclick="openDetail(${p.id})">${p.nombre}</strong><br>
+          <small style="color:var(--text-muted)">${p.ncontrato} · ${p.ubicacion}</small>
+          ${atrasado ? '<br><span class="badge badge-orange" style="margin-top:2px">⚠ Retraso</span>' : ''}
+        </td>
+        <td>${tipoTag(p.tipo)}</td>
+        <td style="font-weight:700;color:var(--text)">${p.unidades ? p.unidades.toLocaleString('es-CL') : '—'}</td>
+        <td>${progressBarDual(p.avance, p.avanceProg)}</td>
+        <td style="font-size:11px;color:var(--text-muted)">${fmtFecha(p.inicio)}</td>
+        <td style="font-size:11px;${drStyle}">${drText}</td>
+        <td>${fmtCLP(p.contrato)}</td>
+        <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
+        <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldoFacturable(p))}</td>
+      </tr>`;
+    }).join('');
   } else {
     rows = ps.map(p => {
       const diff = diferencia(p);
@@ -822,11 +876,11 @@ function renderEstadoTable(tbodyId, estado) {
 
   const totals = estado === 'activo'
     ? `<tr class="totals-row">
-        <td colspan="5">TOTAL (${ps.length} proyectos)</td>
+        <td colspan="6">TOTAL (${ps.length} proyectos)</td>
         <td>${fmtCLP(totalC)}</td>
         <td style="color:var(--accent-green)">${fmtCLP(totalF)}</td>
         <td style="color:var(--accent-red)">${fmtCLP(totalS)}</td>
-        <td></td></tr>`
+      </tr>`
     : `<tr class="totals-row">
         <td colspan="4">TOTAL (${ps.length} proyectos)</td>
         <td>${fmtCLP(totalC)}</td>
@@ -963,19 +1017,24 @@ function openDetail(id) {
   document.getElementById('detail-title').textContent = p.nombre;
   const sf = saldoFacturable(p);
   const pf = pctFacturado(p);
+  const dr = diasRestantes(p.termino);
+  const atrasado = p.avanceProg > 0 && p.avance < p.avanceProg;
+  const drColor = dr !== null && dr < 0 ? 'var(--accent-red)' : dr !== null && dr <= 30 ? 'var(--accent-orange)' : 'var(--text)';
+  const drText  = dr === null ? '—' : dr < 0 ? `Vencido hace ${Math.abs(dr)} días` : `${dr} días restantes`;
   document.getElementById('detail-body').innerHTML = `
     <div class="detail-item"><div class="dlabel">N° / ID Contrato</div><div class="dvalue">${p.ncontrato}</div></div>
     <div class="detail-item"><div class="dlabel">Año Adjudicación</div><div class="dvalue">${p.anio}</div></div>
     <div class="detail-item"><div class="dlabel">Tipo</div><div class="dvalue">${tipoTag(p.tipo)}</div></div>
-    <div class="detail-item"><div class="dlabel">Estado</div><div class="dvalue">${estadoBadge(p.estado)}</div></div>
+    <div class="detail-item"><div class="dlabel">Estado</div><div class="dvalue">${estadoBadge(p.estado)}${atrasado?' <span class="badge badge-orange">⚠ Retraso</span>':''}</div></div>
     <div class="detail-item"><div class="dlabel">Ubicación</div><div class="dvalue">${p.ubicacion}</div></div>
-    <div class="detail-item"><div class="dlabel">Plazo</div><div class="dvalue">${p.plazo ? p.plazo+' días' : '—'}</div></div>
-    <div class="detail-item"><div class="dlabel">Avance Físico</div><div class="dvalue">${progressBar(p.avance)}</div></div>
-    <div class="detail-item"><div class="dlabel">% Facturado</div><div class="dvalue">${pf}%</div></div>
+    <div class="detail-item"><div class="dlabel">Unidades</div><div class="dvalue">${p.unidades ? p.unidades.toLocaleString('es-CL') : '—'}</div></div>
+    <div class="detail-item"><div class="dlabel">Fecha Inicio</div><div class="dvalue">${fmtFecha(p.inicio)}</div></div>
+    <div class="detail-item"><div class="dlabel">Fecha Término</div><div class="dvalue" style="color:${drColor}">${fmtFecha(p.termino)}<br><small>${drText}</small></div></div>
+    <div class="detail-item" style="grid-column:1/-1"><div class="dlabel">Avance Programado vs Real</div><div class="dvalue" style="margin-top:4px">${progressBarDual(p.avance, p.avanceProg)}</div></div>
     <div class="detail-item"><div class="dlabel">Valor Contrato Neto</div><div class="dvalue" style="color:var(--accent-blue)">${fmtCLP(p.contrato)}</div></div>
     <div class="detail-item"><div class="dlabel">Total Facturado</div><div class="dvalue" style="color:var(--accent-green)">${fmtCLP(p.facturado)}</div></div>
+    <div class="detail-item"><div class="dlabel">% Facturado</div><div class="dvalue">${pf}%</div></div>
     <div class="detail-item"><div class="dlabel">Saldo Ganado x Facturar</div><div class="dvalue" style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</div></div>
-    <div class="detail-item"><div class="dlabel">Saldo Total Pendiente</div><div class="dvalue">${fmtCLP(Math.max(0,p.contrato-p.facturado))}</div></div>
   `;
   document.getElementById('modal-detail').classList.add('open');
 }
