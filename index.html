@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monitor de Proyectos — Grupo CINSA</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#4f8ef7" />
+  <meta name="theme-color" content="#4d61ff" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="CINSA" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     /* ── Login ── */
     .login-overlay {
-      position: fixed; inset: 0; background: #0f1117;
+      position: fixed; inset: 0; background: #0c1520;
       display: flex; align-items: center; justify-content: center;
       z-index: 9999; flex-direction: column;
     }
     .login-box {
-      background: #1a1d27; border: 1px solid #2e3450;
+      background: #122030; border: 1px solid #243d56;
       border-radius: 16px; padding: 40px; width: 360px; max-width: 95vw;
     }
     .login-logo { text-align: center; margin-bottom: 28px; }
@@ -28,38 +29,38 @@
     .login-field label { display: block; font-size: 11px; font-weight: 600;
       color: #8892a4; text-transform: uppercase; margin-bottom: 6px; }
     .login-field input {
-      width: 100%; background: #0f1117; border: 1px solid #2e3450;
-      color: #e2e8f0; padding: 11px 14px; border-radius: 8px;
+      width: 100%; background: #0c1520; border: 1px solid #243d56;
+      color: #e8edf5; padding: 11px 14px; border-radius: 8px;
       font-size: 14px; font-family: inherit;
     }
-    .login-field input:focus { outline: none; border-color: #4f8ef7; }
+    .login-field input:focus { outline: none; border-color: #4d61ff; }
     .login-btn {
-      width: 100%; background: #4f8ef7; color: #fff; border: none;
+      width: 100%; background: #4d61ff; color: #fff; border: none;
       padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700;
       cursor: pointer; margin-top: 8px; transition: background .2s;
     }
-    .login-btn:hover { background: #3a7aee; }
+    .login-btn:hover { background: #3a4eee; }
     .login-error { color: #ef4444; font-size: 12px; margin-top: 10px; text-align: center; display: none; }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --card: #21253a;
-      --border: #2e3450;
-      --accent-blue: #4f8ef7;
+      --bg: #0c1520;
+      --surface: #122030;
+      --card: #192c40;
+      --border: #243d56;
+      --accent-blue: #4d61ff;
       --accent-yellow: #f5c518;
       --accent-green: #22c55e;
-      --accent-red: #ef4444;
+      --accent-red: #ff3d6b;
       --accent-purple: #a855f7;
       --accent-orange: #f97316;
-      --text: #e2e8f0;
-      --text-muted: #8892a4;
+      --text: #e8edf5;
+      --text-muted: #7d90a8;
       --radius: 12px;
     }
 
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    body { font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
     /* ── Layout ── */
     .layout { display: flex; min-height: 100vh; }
@@ -82,7 +83,7 @@
       transition: all .2s; margin-bottom: 2px;
     }
     .nav-item:hover { background: var(--card); color: var(--text); }
-    .nav-item.active { background: #1e3a6e; color: var(--accent-blue); font-weight: 600; }
+    .nav-item.active { background: rgba(77,97,255,.18); color: var(--accent-blue); font-weight: 600; }
     .nav-item .icon { font-size: 15px; }
 
     /* ── Main ── */
@@ -97,7 +98,7 @@
 
     .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s; }
     .btn-primary { background: var(--accent-blue); color: #fff; }
-    .btn-primary:hover { background: #3a7aee; }
+    .btn-primary:hover { background: #3a4eee; }
     .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
     .btn-outline:hover { color: var(--text); border-color: var(--text-muted); }
     .btn-sm { padding: 5px 10px; font-size: 11px; }
@@ -142,10 +143,10 @@
 
     /* ── Badges ── */
     .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
-    .badge-blue   { background: rgba(79,142,247,.15);  color: var(--accent-blue); }
+    .badge-blue   { background: rgba(77,97,255,.15);   color: var(--accent-blue); }
     .badge-green  { background: rgba(34,197,94,.15);   color: var(--accent-green); }
     .badge-yellow { background: rgba(245,197,24,.15);  color: var(--accent-yellow); }
-    .badge-red    { background: rgba(239,68,68,.15);   color: var(--accent-red); }
+    .badge-red    { background: rgba(255,61,107,.15);  color: var(--accent-red); }
     .badge-purple { background: rgba(168,85,247,.15);  color: var(--accent-purple); }
     .badge-orange { background: rgba(249,115,22,.15);  color: var(--accent-orange); }
 
@@ -541,7 +542,7 @@ function tipoTag(t) {
   if (t === 'poste')     return `<span class="type-poste">🏙️ Poste Int.</span>`;
 }
 function progressBar(v) {
-  const c = v >= 100 ? '#22c55e' : v >= 70 ? '#4f8ef7' : v >= 40 ? '#f5c518' : '#ef4444';
+  const c = v >= 100 ? '#22c55e' : v >= 70 ? '#4d61ff' : v >= 40 ? '#f5c518' : '#ff3d6b';
   return `<div class="progress-wrap">
     <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(v,100)}%;background:${c}"></div></div>
     <div class="progress-label">${v}%</div>
@@ -549,10 +550,10 @@ function progressBar(v) {
 }
 function progressBarDual(real, prog) {
   const atrasado = prog > 0 && real < prog;
-  const cr = atrasado ? '#ef4444' : '#22c55e';
+  const cr = atrasado ? '#ff3d6b' : '#22c55e';
   return `<div class="prog-dual">
     <div class="prog-labels"><span>Prog: ${prog}%</span><span>Real: ${real}%</span></div>
-    <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(prog,100)}%;background:#4f8ef7"></div></div>
+    <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(prog,100)}%;background:#4d61ff"></div></div>
     <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(real,100)}%;background:${cr}"></div></div>
   </div>`;
 }
@@ -717,7 +718,7 @@ function renderDashboard() {
     options: {
       responsive:true, plugins:{ legend:{display:false} },
       scales: {
-        y:{ max:100, ticks:{color:'#8892a4',callback:v=>v+'%'}, grid:{color:'#2e3450'} },
+        y:{ max:100, ticks:{color:'#8892a4',callback:v=>v+'%'}, grid:{color:'#243d56'} },
         x:{ ticks:{color:'#8892a4'}, grid:{display:false} }
       }
     }

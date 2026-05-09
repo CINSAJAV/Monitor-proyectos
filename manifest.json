@@ -2,12 +2,12 @@
   "name": "Monitor de Proyectos CINSA",
   "short_name": "CINSA",
   "description": "Seguimiento de proyectos de luminarias y televigilancia",
-  "start_url": "/Monitor-proyectos/",
-  "scope": "/Monitor-proyectos/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f1117",
-  "theme_color": "#4f8ef7",
+  "background_color": "#0c1520",
+  "theme_color": "#4d61ff",
   "icons": [
     {
       "src": "icon-192.png",
