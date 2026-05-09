@@ -1,7 +1,7 @@
-const CACHE = 'cinsa-v1';
+const CACHE = 'cinsa-v3';
 const ASSETS = [
-  '/Monitor-proyectos/',
-  '/Monitor-proyectos/index.html'
+  '/',
+  '/index.html'
 ];
 
 self.addEventListener('install', e => {
