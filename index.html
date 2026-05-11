@@ -213,10 +213,29 @@
     /* ── Retraso badge ── */
     .badge-orange { background: rgba(249,115,22,.15); color: var(--accent-orange); }
 
+    /* ── Mobile bottom nav ── */
+    .mobile-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface); border-top: 1px solid var(--border);
+      z-index: 50; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    }
+    .mobile-nav-items { display: flex; justify-content: space-around; }
+    .mobile-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 12px; border-radius: 10px; cursor: pointer;
+      font-size: 10px; color: var(--text-muted); transition: color .2s;
+      background: none; border: none; font-family: inherit;
+    }
+    .mobile-nav-item .mn-icon { font-size: 20px; line-height: 1; }
+    .mobile-nav-item.active { color: var(--accent-blue); }
+
     @media (max-width: 900px) {
       .sidebar { display: none; }
       .kpi-grid { grid-template-columns: repeat(3,1fr); }
       .charts-row { grid-template-columns: 1fr; }
+      .mobile-nav { display: block; }
+      .main { padding-bottom: 70px; }
     }
     @media (max-width: 600px) {
       .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -431,6 +450,27 @@
   </div>
 </div>
 
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-items">
+    <button class="mobile-nav-item active" onclick="navigate('dashboard', null, this)">
+      <span class="mn-icon">📊</span>Dashboard
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('proyectos', null, this)">
+      <span class="mn-icon">📋</span>Proyectos
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('activos', null, this)">
+      <span class="mn-icon">🟢</span>Ejecución
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('facturacion', null, this)">
+      <span class="mn-icon">🧾</span>Facturación
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('completados', null, this)">
+      <span class="mn-icon">✅</span>Completados
+    </button>
+  </div>
+</nav>
+
 <!-- MODAL NUEVO/EDITAR -->
 <div class="modal-overlay" id="modal-new">
   <div class="modal">
@@ -613,12 +653,16 @@ const TITLES = {
   luminarias:'Luminarias', camaras:'Televigilancia', postes:'Postes Inteligentes',
   activos:'En Ejecución', completados:'Completados'
 };
-function navigate(view, el) {
+function navigate(view, sidebarEl, mobileEl) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + view).classList.add('active');
-  if (el) {
+  if (sidebarEl) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
+    sidebarEl.classList.add('active');
+  }
+  if (mobileEl) {
+    document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+    mobileEl.classList.add('active');
   }
   document.getElementById('page-title').textContent = TITLES[view] || view;
   renderView(view);
