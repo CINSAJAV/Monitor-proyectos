@@ -307,7 +307,7 @@
           <canvas id="chartTipo"></canvas>
         </div>
         <div class="chart-box">
-          <h3>Facturado vs Saldo por Cobrar (Neto)</h3>
+          <h3>Facturación por Año y Tipo</h3>
           <canvas id="chartFactura"></canvas>
         </div>
       </div>
@@ -725,28 +725,33 @@ function renderDashboard() {
     }
   });
 
-  // Chart facturado vs saldo total
-  const lumF = ps.filter(p=>p.tipo==='luminaria').reduce((a,p)=>a+p.facturado,0);
-  const lumS = ps.filter(p=>p.tipo==='luminaria').reduce((a,p)=>a+saldoFacturable(p),0);
-  const camF = ps.filter(p=>p.tipo==='camara').reduce((a,p)=>a+p.facturado,0);
-  const camS = ps.filter(p=>p.tipo==='camara').reduce((a,p)=>a+saldoFacturable(p),0);
-  const posF = ps.filter(p=>p.tipo==='poste').reduce((a,p)=>a+p.facturado,0);
-  const posS = ps.filter(p=>p.tipo==='poste').reduce((a,p)=>a+saldoFacturable(p),0);
+  // Chart facturación por año y tipo (barras apiladas)
+  const años = [...new Set(ps.map(p=>p.anio))].sort();
+  const lumPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='luminaria').reduce((a,p)=>a+p.facturado,0));
+  const camPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='camara').reduce((a,p)=>a+p.facturado,0));
+  const posPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='poste').reduce((a,p)=>a+p.facturado,0));
 
   if (chartFactura) chartFactura.destroy();
   chartFactura = new Chart(document.getElementById('chartFactura'), {
-    type: 'doughnut',
+    type: 'bar',
     data: {
-      labels:['Lum. Facturado','Lum. x Fact.','Telev. Facturado','Telev. x Fact.','Postes Fact.','Postes x Fact.'],
-      datasets:[{
-        data:[lumF, lumS, camF, camS, posF, posS],
-        backgroundColor:['#f5c518','rgba(245,197,24,.2)','#a855f7','rgba(168,85,247,.2)','#f97316','rgba(249,115,22,.2)'],
-        borderColor:'transparent'
-      }]
+      labels: años,
+      datasets: [
+        { label:'Luminarias',    data: lumPorAño, backgroundColor:'rgba(245,197,24,.7)',  borderColor:'#f5c518', borderWidth:2, borderRadius:4 },
+        { label:'Televigilancia',data: camPorAño, backgroundColor:'rgba(168,85,247,.7)',  borderColor:'#a855f7', borderWidth:2, borderRadius:4 },
+        { label:'Postes Int.',   data: posPorAño, backgroundColor:'rgba(249,115,22,.7)',  borderColor:'#f97316', borderWidth:2, borderRadius:4 },
+      ]
     },
     options:{
-      responsive:true, cutout:'62%',
-      plugins:{ legend:{position:'bottom', labels:{color:'#8892a4',padding:10,boxWidth:10,font:{size:10}}} }
+      responsive:true,
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#7d90a8', padding:12, boxWidth:10, font:{size:10} } },
+        tooltip:{ callbacks:{ label: ctx => ' ' + fmtM(ctx.raw) } }
+      },
+      scales:{
+        x:{ stacked:true, ticks:{ color:'#7d90a8' }, grid:{ display:false } },
+        y:{ stacked:true, ticks:{ color:'#7d90a8', callback: v => fmtM(v) }, grid:{ color:'#243d56' } }
+      }
     }
   });
 }
