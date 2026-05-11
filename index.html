@@ -586,7 +586,7 @@ let proyectos = [
   { id:11, anio:2024, ncontrato:'2392-9-LQ24',   nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579,  facturado:166926578,  avance:100, avanceProg:100, unidades:274,  plazo:90,  inicio:'2024-07-18', termino:'2024-10-16' },
   { id:12, anio:2024, ncontrato:'Privado',        nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',            contrato:89202933,   facturado:89202933,   avance:100, avanceProg:100, unidades:16,   plazo:145, inicio:'2024-07-04', termino:'2024-11-26' },
   { id:13, anio:2025, ncontrato:'2430-32-LR24',  nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',         contrato:2360725400, facturado:684511200,  avance:95,  avanceProg:100, unidades:100,  plazo:287, inicio:'2025-07-21', termino:'2026-05-04' },
-  { id:14, anio:2024, ncontrato:'2490-70-LR24',  nombre:'Providencia',         tipo:'camara',    estado:'activo',     ubicacion:'Providencia',         contrato:479800000,  facturado:321457409,  avance:100, avanceProg:100, unidades:34,   plazo:310, inicio:'2025-03-17', termino:'2026-01-21' },
+  { id:14, anio:2024, ncontrato:'2490-70-LR24',  nombre:'Providencia',         tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:479800000,  facturado:321457409,  avance:100, avanceProg:100, unidades:34,   plazo:310, inicio:'2025-03-17', termino:'2026-01-21' },
   { id:15, anio:2024, ncontrato:'4160-23-LR24',  nombre:'Hualpén',             tipo:'luminaria', estado:'completado', ubicacion:'Hualpén',             contrato:2597763601, facturado:2597763601, avance:100, avanceProg:100, unidades:7560, plazo:131, inicio:'2025-04-01', termino:'2025-08-10' },
   { id:16, anio:2024, ncontrato:'2490-87-LE24',  nombre:'Providencia II',      tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:43000000,   facturado:34025883,   avance:100, avanceProg:100, unidades:14,   plazo:98,  inicio:'2025-04-14', termino:'2025-07-21' },
   { id:17, anio:2024, ncontrato:'Privado',        nombre:'Nevados de Chillán',  tipo:'luminaria', estado:'completado', ubicacion:'Chillán',             contrato:34649370,   facturado:34649370,   avance:100, avanceProg:100, unidades:63,   plazo:43,  inicio:'2025-03-26', termino:'2025-05-08' },
@@ -778,7 +778,7 @@ function renderDashboard() {
       <td>${progressBarDual(p.avance, p.avanceProg)}</td>
       <td>${fmtCLP(p.contrato)}</td>
       <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
-      <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldoFacturable(p))}</td>
+      <td style="color:var(--accent-red);font-weight:700">${fmtCLP(Math.max(0,p.contrato-p.facturado))}</td>
       <td style="font-size:11px">${drLabel}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin proyectos activos</td></tr>`;
@@ -812,11 +812,17 @@ function renderDashboard() {
     }
   });
 
-  // Chart facturación por año y tipo (barras apiladas)
-  const años = [...new Set(ps.map(p=>p.anio))].sort();
-  const lumPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='luminaria').reduce((a,p)=>a+p.facturado,0));
-  const camPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='camara').reduce((a,p)=>a+p.facturado,0));
-  const posPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='poste').reduce((a,p)=>a+p.facturado,0));
+  // Chart facturación por año real de facturación (datos del Excel por columna de año)
+  // Fuente: Dashboard Proyectos.xlsx — columnas Facturado Real 2024/2025/2026
+  const FACT_REAL = {
+    2024: { luminaria: 2433959353, camara: 132120795, poste: 151475016 },
+    2025: { luminaria: 3331286162, camara: 544681668,  poste: 77114150  },
+    2026: { luminaria: 354624835,  camara: 860523540,  poste: 0          },
+  };
+  const años = [2024, 2025, 2026];
+  const lumPorAño = años.map(y => FACT_REAL[y].luminaria);
+  const camPorAño = años.map(y => FACT_REAL[y].camara);
+  const posPorAño = años.map(y => FACT_REAL[y].poste);
 
   if (chartFactura) chartFactura.destroy();
   chartFactura = new Chart(document.getElementById('chartFactura'), {
