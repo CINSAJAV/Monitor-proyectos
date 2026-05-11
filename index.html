@@ -672,9 +672,9 @@ function renderDashboard() {
       <div class="sub">de ${fmtM(totalContrato)} contratados</div>
     </div>
     <div class="kpi-card red">
-      <div class="label">Saldo Ganado x Facturar</div>
-      <div class="value">${fmtM(totalSaldoF)}</div>
-      <div class="sub">según avance físico</div>
+      <div class="label">Saldo Total x Facturar</div>
+      <div class="value">${fmtM(ps.reduce((a,p)=>a+Math.max(0,p.contrato-p.facturado),0))}</div>
+      <div class="sub">incluye contratos no iniciados</div>
     </div>
   `;
 
