@@ -281,6 +281,9 @@
       <div class="nav-item active" onclick="navigate('dashboard', this)">
         <span class="icon">📊</span> Dashboard
       </div>
+      <div class="nav-item" onclick="navigate('flujo', this)">
+        <span class="icon">📈</span> Flujo Proyectado
+      </div>
       <div class="nav-item" onclick="navigate('facturacion', this)">
         <span class="icon">🧾</span> Facturación
       </div>
@@ -364,6 +367,27 @@
             <th>% Fact.</th><th>Saldo x Fact.</th><th>Estado</th><th></th>
           </tr></thead>
           <tbody id="tbody-proyectos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FLUJO PROYECTADO -->
+    <div id="view-flujo" class="view">
+      <div class="kpi-grid" id="kpi-flujo"></div>
+      <div class="chart-box" style="margin-bottom:22px">
+        <h3>Facturación Proyectada Mensual (próximos 18 meses)</h3>
+        <canvas id="chartFlujo" style="max-height:260px"></canvas>
+      </div>
+      <div class="section-header">
+        <h3>Desglose por Proyecto</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Proyecto</th><th>Tipo</th><th>Saldo x Facturar</th>
+            <th>Inicio</th><th>Término</th><th>Meses restantes</th><th>Prom. mensual</th>
+          </tr></thead>
+          <tbody id="tbody-flujo"></tbody>
         </table>
       </div>
     </div>
@@ -461,6 +485,9 @@
     </button>
     <button class="mobile-nav-item" onclick="navigate('activos', null, this)">
       <span class="mn-icon">🟢</span>Ejecución
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('flujo', null, this)">
+      <span class="mn-icon">📈</span>Flujo
     </button>
     <button class="mobile-nav-item" onclick="navigate('facturacion', null, this)">
       <span class="mn-icon">🧾</span>Facturación
@@ -650,6 +677,7 @@ function buscar(v) { searchTerm = v; renderProyectos(); }
 // ══════════════════════════════════════════════════════
 const TITLES = {
   dashboard:'Dashboard', proyectos:'Proyectos', facturacion:'Facturación',
+  flujo:'Flujo Proyectado',
   luminarias:'Luminarias', camaras:'Televigilancia', postes:'Postes Inteligentes',
   activos:'En Ejecución', completados:'Completados'
 };
@@ -670,6 +698,7 @@ function navigate(view, sidebarEl, mobileEl) {
 function renderView(v) {
   const map = {
     dashboard: renderDashboard, proyectos: renderProyectos, facturacion: renderFacturacion,
+    flujo: renderFlujoProyectado,
     luminarias: () => renderTipoTable('lum','luminaria'),
     camaras:    () => renderTipoTable('cam','camara'),
     postes:     () => renderTipoTable('pos','poste'),
@@ -682,7 +711,7 @@ function renderView(v) {
 // ══════════════════════════════════════════════════════
 // CHARTS
 // ══════════════════════════════════════════════════════
-let chartTipo, chartFactura;
+let chartTipo, chartFactura, chartFlujo;
 
 function renderDashboard() {
   const ps = proyectos;
@@ -943,6 +972,116 @@ function renderEstadoTable(tbodyId, estado) {
         <td><span class="badge badge-blue">${Math.round(totalF/totalC*100)||0}%</span></td></tr>`;
 
   document.getElementById('tbody-'+tbodyId).innerHTML = rows + totals;
+}
+
+// ══════════════════════════════════════════════════════
+// FLUJO PROYECTADO
+// ══════════════════════════════════════════════════════
+function calcularFlujo() {
+  const hoy = new Date(); hoy.setDate(1); hoy.setHours(0,0,0,0);
+  const meses = [];
+  for (let i = 0; i < 18; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    meses.push({ year: d.getFullYear(), month: d.getMonth(), total: 0, proyectos: [] });
+  }
+  proyectos.filter(p => p.estado === 'activo').forEach(p => {
+    const saldo = Math.max(0, p.contrato - p.facturado);
+    if (saldo <= 0) return;
+    const inicioP = p.inicio && p.inicio !== '—' ? new Date(p.inicio) : hoy;
+    const terminoP = p.termino && p.termino !== '—' ? new Date(p.termino) : null;
+    if (!terminoP) return;
+    terminoP.setDate(1);
+    const mesesActivos = meses.filter(m => {
+      const fm = new Date(m.year, m.month, 1);
+      return fm >= (inicioP < hoy ? hoy : new Date(inicioP.getFullYear(), inicioP.getMonth(), 1))
+          && fm <= new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
+    });
+    if (!mesesActivos.length) return;
+    const porMes = saldo / mesesActivos.length;
+    mesesActivos.forEach(m => {
+      m.total += porMes;
+      m.proyectos.push({ nombre: p.nombre, monto: porMes });
+    });
+  });
+  return meses;
+}
+
+function renderFlujoProyectado() {
+  const meses = calcularFlujo();
+  const MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const labels = meses.map(m => `${MESES_ES[m.month]} ${m.year}`);
+  const valores = meses.map(m => m.total);
+  const total12 = valores.slice(0, 12).reduce((a, v) => a + v, 0);
+  const mesMax = meses.reduce((a, m) => m.total > a.total ? m : a, meses[0]);
+  const activos = proyectos.filter(p => p.estado === 'activo' && Math.max(0, p.contrato - p.facturado) > 0);
+
+  document.getElementById('kpi-flujo').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="label">Proyectado próx. 12 meses</div>
+      <div class="value">${fmtM(total12)}</div>
+      <div class="sub">facturación estimada</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Mes de mayor ingreso</div>
+      <div class="value">${MESES_ES[mesMax.month]} ${mesMax.year}</div>
+      <div class="sub">${fmtM(mesMax.total)} estimado</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Proyectos con saldo</div>
+      <div class="value">${activos.length}</div>
+      <div class="sub">generando flujo activo</div>
+    </div>
+  `;
+
+  if (chartFlujo) chartFlujo.destroy();
+  chartFlujo = new Chart(document.getElementById('chartFlujo'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Facturación proyectada',
+        data: valores,
+        backgroundColor: valores.map((v,i) => i === 0 ? 'rgba(255,61,107,.7)' : 'rgba(77,97,255,.6)'),
+        borderColor:     valores.map((v,i) => i === 0 ? '#ff3d6b' : '#4d61ff'),
+        borderWidth: 2, borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + fmtM(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color:'#7d90a8', maxRotation:45 }, grid: { display:false } },
+        y: { ticks: { color:'#7d90a8', callback: v => fmtM(v) }, grid: { color:'#243d56' } }
+      }
+    }
+  });
+
+  const tbody = activos.map(p => {
+    const saldo = Math.max(0, p.contrato - p.facturado);
+    const inicioP = p.inicio && p.inicio !== '—' ? new Date(p.inicio) : new Date();
+    const terminoP = p.termino && p.termino !== '—' ? new Date(p.termino) : null;
+    const hoy = new Date(); hoy.setDate(1);
+    const desde = inicioP < hoy ? hoy : new Date(inicioP.getFullYear(), inicioP.getMonth(), 1);
+    let mesesR = 0;
+    if (terminoP) {
+      const fin = new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
+      while (desde <= fin) { mesesR++; desde.setMonth(desde.getMonth() + 1); }
+    }
+    const promMes = mesesR > 0 ? saldo / mesesR : 0;
+    return `<tr>
+      <td><strong>${p.nombre}</strong><br><small style="color:var(--text-muted)">${p.ncontrato}</small></td>
+      <td>${tipoTag(p.tipo)}</td>
+      <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldo)}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${fmtFecha(p.inicio)}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${fmtFecha(p.termino)}</td>
+      <td style="text-align:center;font-weight:700">${mesesR}</td>
+      <td style="color:var(--accent-blue);font-weight:700">${fmtCLP(promMes)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tbody-flujo').innerHTML = tbody || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin proyectos activos con saldo</td></tr>`;
 }
 
 // ══════════════════════════════════════════════════════
