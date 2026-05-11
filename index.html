@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitor de Proyectos — Grupo CINSA</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4d61ff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CINSA" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Login ── */
+    .login-overlay {
+      position: fixed; inset: 0; background: #0c1520;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; flex-direction: column;
+    }
+    .login-box {
+      background: #122030; border: 1px solid #243d56;
+      border-radius: 16px; padding: 40px; width: 360px; max-width: 95vw;
+    }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .login-logo h1 { font-size: 20px; font-weight: 800; color: #4f8ef7; margin-top: 12px; }
+    .login-logo span { font-size: 12px; color: #8892a4; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label { display: block; font-size: 11px; font-weight: 600;
+      color: #8892a4; text-transform: uppercase; margin-bottom: 6px; }
+    .login-field input {
+      width: 100%; background: #0c1520; border: 1px solid #243d56;
+      color: #e8edf5; padding: 11px 14px; border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+    }
+    .login-field input:focus { outline: none; border-color: #4d61ff; }
+    .login-btn {
+      width: 100%; background: #4d61ff; color: #fff; border: none;
+      padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700;
+      cursor: pointer; margin-top: 8px; transition: background .2s;
+    }
+    .login-btn:hover { background: #3a4eee; }
+    .login-error { color: #ef4444; font-size: 12px; margin-top: 10px; text-align: center; display: none; }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c1520;
+      --surface: #122030;
+      --card: #192c40;
+      --border: #243d56;
+      --accent-blue: #4d61ff;
+      --accent-yellow: #f5c518;
+      --accent-green: #22c55e;
+      --accent-red: #ff3d6b;
+      --accent-purple: #a855f7;
+      --accent-orange: #f97316;
+      --text: #e8edf5;
+      --text-muted: #7d90a8;
+      --radius: 12px;
+    }
+
+    body { font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 24px 0;
+      flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+    }
+    .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo h1 { font-size: 14px; font-weight: 800; color: var(--accent-blue); line-height: 1.4; }
+    .sidebar-logo span { font-size: 11px; color: var(--text-muted); }
+
+    .nav { padding: 14px 12px; flex: 1; overflow-y: auto; }
+    .nav-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1px; padding: 10px 8px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted);
+      transition: all .2s; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--card); color: var(--text); }
+    .nav-item.active { background: rgba(77,97,255,.18); color: var(--accent-blue); font-weight: 600; }
+    .nav-item .icon { font-size: 15px; }
+
+    /* ── Main ── */
+    .main { flex: 1; overflow-y: auto; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h2 { font-size: 17px; font-weight: 700; }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+    .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .2s; }
+    .btn-primary { background: var(--accent-blue); color: #fff; }
+    .btn-primary:hover { background: #3a4eee; }
+    .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-outline:hover { color: var(--text); border-color: var(--text-muted); }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+    /* ── Views ── */
+    .view { display: none; padding: 22px 28px; }
+    .view.active { display: block; }
+
+    /* ── KPI Cards ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 22px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .kpi-card .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+    .kpi-card .value { font-size: 22px; font-weight: 800; line-height: 1; }
+    .kpi-card .sub { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .kpi-card.blue   .value { color: var(--accent-blue); }
+    .kpi-card.green  .value { color: var(--accent-green); }
+    .kpi-card.yellow .value { color: var(--accent-yellow); }
+    .kpi-card.red    .value { color: var(--accent-red); }
+
+    /* ── Charts ── */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+    .chart-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+    .chart-box h3 { font-size: 12px; font-weight: 700; margin-bottom: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; }
+    .chart-box canvas { max-height: 200px; }
+
+    /* ── Tables ── */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-header h3 { font-size: 14px; font-weight: 700; }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 22px; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: var(--surface); padding: 10px 14px; text-align: left; font-size: 10px;
+      font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .7px; white-space: nowrap; }
+    tbody tr { border-top: 1px solid var(--border); transition: background .15s; }
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+    td { padding: 11px 14px; font-size: 12px; }
+
+    /* ── Progress ── */
+    .progress-wrap { min-width: 110px; }
+    .progress-bar { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; margin-bottom: 3px; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+    .progress-label { font-size: 10px; color: var(--text-muted); }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .badge-blue   { background: rgba(77,97,255,.15);   color: var(--accent-blue); }
+    .badge-green  { background: rgba(34,197,94,.15);   color: var(--accent-green); }
+    .badge-yellow { background: rgba(245,197,24,.15);  color: var(--accent-yellow); }
+    .badge-red    { background: rgba(255,61,107,.15);  color: var(--accent-red); }
+    .badge-purple { background: rgba(168,85,247,.15);  color: var(--accent-purple); }
+    .badge-orange { background: rgba(249,115,22,.15);  color: var(--accent-orange); }
+
+    .type-lum   { color: var(--accent-yellow); }
+    .type-cam   { color: var(--accent-purple); }
+    .type-poste { color: var(--accent-orange); }
+
+    /* ── Filters ── */
+    .filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-muted); font-size: 11px; cursor: pointer; transition: all .2s; }
+    .filter-btn:hover { border-color: var(--accent-blue); color: var(--text); }
+    .filter-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+    /* ── Facturación cards ── */
+    .factura-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+    .factura-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .factura-header h4 { font-size: 13px; font-weight: 700; }
+    .factura-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .amount-box { text-align: center; padding: 10px; background: var(--surface); border-radius: 8px; }
+    .amount-box .alabel { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; letter-spacing: .5px; }
+    .amount-box .avalue { font-size: 14px; font-weight: 800; }
+
+    /* ── Modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 26px; width: 520px; max-width: 95vw; max-height: 92vh; overflow-y: auto; }
+    .modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1/-1; }
+    .form-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .form-group input, .form-group select {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 11px; border-radius: 8px; font-size: 13px; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-blue); }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+    /* ── Detail modal ── */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .detail-item .dlabel { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 3px; }
+    .detail-item .dvalue { font-size: 13px; font-weight: 600; }
+
+    /* ── Search ── */
+    .search-input { background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 7px 13px; border-radius: 8px; font-size: 12px; width: 200px; }
+    .search-input:focus { outline: none; border-color: var(--accent-blue); }
+
+    /* ── Totals row ── */
+    .totals-row td { font-weight: 700; background: rgba(79,142,247,.07); border-top: 2px solid var(--accent-blue) !important; }
+
+    /* ── Dual progress bar ── */
+    .prog-dual { min-width: 130px; }
+    .prog-dual .prog-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--text-muted); margin-bottom:3px; }
+    .prog-dual .prog-bar-thin { height:5px; border-radius:3px; background:var(--border); overflow:hidden; margin-bottom:2px; }
+    .prog-dual .prog-bar-thin .fill { height:100%; border-radius:3px; transition:width .4s; }
+    .prog-dual .prog-legend { display:flex; gap:8px; font-size:9px; color:var(--text-muted); }
+    .prog-dual .prog-legend span { display:flex; align-items:center; gap:3px; }
+    .prog-dual .dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+
+    /* ── Retraso badge ── */
+    .badge-orange { background: rgba(249,115,22,.15); color: var(--accent-orange); }
+
+    /* ── Mobile bottom nav ── */
+    .mobile-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface); border-top: 1px solid var(--border);
+      z-index: 50; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+    }
+    .mobile-nav-items { display: flex; justify-content: space-around; }
+    .mobile-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 12px; border-radius: 10px; cursor: pointer;
+      font-size: 10px; color: var(--text-muted); transition: color .2s;
+      background: none; border: none; font-family: inherit;
+    }
+    .mobile-nav-item .mn-icon { font-size: 20px; line-height: 1; }
+    .mobile-nav-item.active { color: var(--accent-blue); }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .kpi-grid { grid-template-columns: repeat(3,1fr); }
+      .charts-row { grid-template-columns: 1fr; }
+      .mobile-nav { display: block; }
+      .main { padding-bottom: 70px; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .factura-amounts { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="icon-192.png" width="64" style="border-radius:12px" />
+      <h1>Monitor de Proyectos</h1>
+      <span>Grupo CINSA</span>
+    </div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="Tu usuario" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="Tu contraseña" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <img src="icon-192.png" alt="CINSA" style="width:52px;border-radius:10px;display:block;margin-bottom:10px;" />
+      <h1>Monitor de Proyectos<br>Grupo CINSA</h1>
+      <span>Actualizado desde Google Drive</span>
+    </div>
+    <div class="nav">
+      <div class="nav-label">Resumen</div>
+      <div class="nav-item active" onclick="navigate('dashboard', this)">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="navigate('flujo', this)">
+        <span class="icon">📈</span> Flujo Proyectado
+      </div>
+      <div class="nav-item" onclick="navigate('facturacion', this)">
+        <span class="icon">🧾</span> Facturación
+      </div>
+      <div class="nav-label">Por Tipo</div>
+      <div class="nav-item" onclick="navigate('proyectos', this)">
+        <span class="icon">📋</span> Todos los Proyectos
+      </div>
+      <div class="nav-item" onclick="navigate('luminarias', this)">
+        <span class="icon">💡</span> Luminarias
+      </div>
+      <div class="nav-item" onclick="navigate('camaras', this)">
+        <span class="icon">📷</span> Televigilancia
+      </div>
+      <div class="nav-item" onclick="navigate('postes', this)">
+        <span class="icon">🏙️</span> Postes Inteligentes
+      </div>
+      <div class="nav-label">Estado</div>
+      <div class="nav-item" onclick="navigate('activos', this)">
+        <span class="icon">🟢</span> En Ejecución
+      </div>
+      <div class="nav-item" onclick="navigate('completados', this)">
+        <span class="icon">✅</span> Completados
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="topbar-actions">
+        <input class="search-input" type="text" placeholder="🔍  Buscar proyecto..." oninput="buscar(this.value)" />
+        <button class="btn btn-primary" onclick="openModal()">+ Nuevo Proyecto</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="charts-row">
+        <div class="chart-box">
+          <h3>Contratado vs Facturado por Tipo</h3>
+          <canvas id="chartTipo"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Facturación por Año y Tipo</h3>
+          <canvas id="chartFactura"></canvas>
+        </div>
+      </div>
+      <div class="section-header">
+        <h3>Proyectos en Ejecución</h3>
+        <button class="btn btn-outline" onclick="navigate('proyectos', null)">Ver todos →</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Proyecto</th><th>Tipo</th><th>Prog. vs Real</th>
+            <th>Contrato Neto</th><th>Facturado</th><th>Saldo x Facturar</th><th>Término</th>
+          </tr></thead>
+          <tbody id="tbody-dashboard"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TODOS LOS PROYECTOS -->
+    <div id="view-proyectos" class="view">
+      <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('todos','tipo',this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('luminaria','tipo',this)">💡 Luminarias</button>
+        <button class="filter-btn" onclick="setFilter('camara','tipo',this)">📷 Televigilancia</button>
+        <button class="filter-btn" onclick="setFilter('poste','tipo',this)">🏙️ Postes Int.</button>
+        <span style="width:1px;background:var(--border);display:inline-block;height:20px;margin:0 4px"></span>
+        <button class="filter-btn" onclick="setFilter('activo','estado',this)">En Ejecución</button>
+        <button class="filter-btn" onclick="setFilter('completado','estado',this)">Completados</button>
+      </div>
+      <div class="table-wrap" id="wrap-proyectos">
+        <table>
+          <thead><tr>
+            <th>Año</th><th>ID Contrato</th><th>Proyecto</th><th>Tipo</th>
+            <th>Contrato Neto</th><th>% Avance</th><th>Facturado</th>
+            <th>% Fact.</th><th>Saldo x Fact.</th><th>Estado</th><th></th>
+          </tr></thead>
+          <tbody id="tbody-proyectos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FLUJO PROYECTADO -->
+    <div id="view-flujo" class="view">
+      <div class="kpi-grid" id="kpi-flujo"></div>
+      <div class="chart-box" style="margin-bottom:22px">
+        <h3>Facturación Proyectada desde Contratos (próximos 18 meses)</h3>
+        <canvas id="chartFlujo" style="max-height:260px"></canvas>
+      </div>
+      <div class="chart-box" style="margin-bottom:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <h3 style="margin:0">Ventas &amp; Resultado Operacional — Flujo de Caja CINSA</h3>
+          <span id="flujo-fuente" style="font-size:10px;color:var(--text-muted);background:var(--border);padding:3px 8px;border-radius:20px"></span>
+        </div>
+        <canvas id="chartFlujo2" style="max-height:280px"></canvas>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4d61ff;margin-right:4px"></span>Ventas reales</span>
+          <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(77,97,255,.35);margin-right:4px"></span>Ventas proyectadas</span>
+          <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:22px;height:3px;background:#22c55e;margin-right:4px;vertical-align:middle"></span>Resultado Operacional</span>
+        </div>
+      </div>
+      <div class="section-header">
+        <h3>Desglose por Proyecto</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Proyecto</th><th>Tipo</th><th>Saldo x Facturar</th>
+            <th>Inicio</th><th>Término</th><th>Meses restantes</th><th>Prom. mensual</th>
+          </tr></thead>
+          <tbody id="tbody-flujo"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FACTURACIÓN -->
+    <div id="view-facturacion" class="view">
+      <div class="kpi-grid" id="kpi-factura"></div>
+      <div class="section-header" style="margin-top:6px">
+        <h3>Detalle por Proyecto</h3>
+        <div class="filters" style="margin:0">
+          <button class="filter-btn active" onclick="setFactFilter('todos',this)">Todos</button>
+          <button class="filter-btn" onclick="setFactFilter('activo',this)">En Ejecución</button>
+          <button class="filter-btn" onclick="setFactFilter('completado',this)">Completados</button>
+        </div>
+      </div>
+      <div id="lista-facturas"></div>
+    </div>
+
+    <!-- LUMINARIAS -->
+    <div id="view-luminarias" class="view">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Año</th><th>ID</th><th>Proyecto</th><th>% Avance</th>
+            <th>Contrato Neto</th><th>Facturado</th><th>Saldo x Fact.</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="tbody-lum"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TELEVIGILANCIA -->
+    <div id="view-camaras" class="view">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Año</th><th>ID</th><th>Proyecto</th><th>% Avance</th>
+            <th>Contrato Neto</th><th>Facturado</th><th>Saldo x Fact.</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="tbody-cam"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- POSTES INTELIGENTES -->
+    <div id="view-postes" class="view">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Año</th><th>ID</th><th>Proyecto</th><th>% Avance</th>
+            <th>Contrato Neto</th><th>Facturado</th><th>Saldo x Fact.</th><th>Estado</th>
+          </tr></thead>
+          <tbody id="tbody-pos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EN EJECUCIÓN -->
+    <div id="view-activos" class="view">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Proyecto</th><th>Tipo</th><th>Unidades</th><th>Prog. vs Real</th>
+            <th>Inicio</th><th>Término</th><th>Contrato Neto</th><th>Facturado</th><th>Saldo x Fact.</th>
+          </tr></thead>
+          <tbody id="tbody-activos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMPLETADOS -->
+    <div id="view-completados" class="view">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Año</th><th>ID Contrato</th><th>Proyecto</th><th>Tipo</th>
+            <th>Contrato Neto</th><th>Facturado</th><th>Diferencia</th><th>% Fact.</th>
+          </tr></thead>
+          <tbody id="tbody-completados"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-items">
+    <button class="mobile-nav-item active" onclick="navigate('dashboard', null, this)">
+      <span class="mn-icon">📊</span>Dashboard
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('proyectos', null, this)">
+      <span class="mn-icon">📋</span>Proyectos
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('activos', null, this)">
+      <span class="mn-icon">🟢</span>Ejecución
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('flujo', null, this)">
+      <span class="mn-icon">📈</span>Flujo
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('facturacion', null, this)">
+      <span class="mn-icon">🧾</span>Facturación
+    </button>
+    <button class="mobile-nav-item" onclick="navigate('completados', null, this)">
+      <span class="mn-icon">✅</span>Completados
+    </button>
+  </div>
+</nav>
+
+<!-- MODAL NUEVO/EDITAR -->
+<div class="modal-overlay" id="modal-new">
+  <div class="modal">
+    <h3 id="modal-title">Nuevo Proyecto</h3>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre del Proyecto</label>
+        <input type="text" id="f-nombre" /></div>
+      <div class="form-group"><label>Tipo</label>
+        <select id="f-tipo">
+          <option value="luminaria">💡 Luminaria</option>
+          <option value="camara">📷 Televigilancia</option>
+          <option value="poste">🏙️ Postes Inteligentes</option>
+        </select></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="f-estado">
+          <option value="activo">En Ejecución</option>
+          <option value="completado">Completado</option>
+          <option value="pausado">Pausado</option>
+        </select></div>
+      <div class="form-group"><label>Año Adjudicación</label>
+        <input type="number" id="f-anio" placeholder="2025" /></div>
+      <div class="form-group"><label>ID / N° Contrato</label>
+        <input type="text" id="f-ncontrato" /></div>
+      <div class="form-group full"><label>Ubicación / Comuna</label>
+        <input type="text" id="f-ubicacion" /></div>
+      <div class="form-group"><label>Monto Contrato Neto (CLP)</label>
+        <input type="number" id="f-contrato" /></div>
+      <div class="form-group"><label>Total Facturado (CLP)</label>
+        <input type="number" id="f-facturado" /></div>
+      <div class="form-group"><label>% Avance Físico</label>
+        <input type="number" id="f-avance" min="0" max="100" /></div>
+      <div class="form-group"><label>Plazo (días)</label>
+        <input type="number" id="f-plazo" /></div>
+      <div class="form-group"><label>Fecha Inicio</label>
+        <input type="date" id="f-inicio" /></div>
+      <div class="form-group"><label>Fecha Término</label>
+        <input type="date" id="f-termino" /></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProyecto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal" style="width:580px">
+    <h3 id="detail-title"></h3>
+    <div class="detail-grid" id="detail-body"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeDetail()">Cerrar</button>
+      <button class="btn btn-primary" onclick="editarDesdeDetalle()">Editar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATOS REALES — Dashboard Proyectos.xlsx (Grupo CINSA)
+// Última actualización: 2026-05-09
+// ══════════════════════════════════════════════════════
+let proyectos = [
+  { id:1,  anio:2023, ncontrato:'3824-37-LR23',  nombre:'Padre Hurtado',       tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:1631127731, facturado:1631127731, avance:100, avanceProg:100, unidades:4000, plazo:235, inicio:'2023-11-24', termino:'2024-07-16' },
+  { id:2,  anio:2023, ncontrato:'3211-14-LQ23',  nombre:'Collipulli',          tipo:'luminaria', estado:'completado', ubicacion:'Collipulli',         contrato:257559069,  facturado:257559069,  avance:100, avanceProg:100, unidades:236,  plazo:345, inicio:'2024-01-15', termino:'2024-12-25' },
+  { id:3,  anio:2024, ncontrato:'2582-74-LR23',  nombre:'Santiago',            tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:250682919,  facturado:250682920,  avance:100, avanceProg:100, unidades:123,  plazo:185, inicio:'2024-09-02', termino:'2025-03-06' },
+  { id:4,  anio:2024, ncontrato:'3824-11-LQ24',  nombre:'Padre Hurtado II',    tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:37274400,   facturado:37274400,   avance:100, avanceProg:100, unidades:20,   plazo:60,  inicio:'2024-09-12', termino:'2024-11-11' },
+  { id:5,  anio:2024, ncontrato:'3775-16-LR24',  nombre:'Hijuelas',            tipo:'camara',    estado:'completado', ubicacion:'Hijuelas',            contrato:357708414,  facturado:357708414,  avance:100, avanceProg:100, unidades:17,   plazo:158, inicio:'2025-03-24', termino:'2025-08-29' },
+  { id:6,  anio:2024, ncontrato:'2483-136-LP24', nombre:'Quilicura',           tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:59094160,   facturado:59094160,   avance:100, avanceProg:100, unidades:4,    plazo:72,  inicio:'2024-06-27', termino:'2024-09-07' },
+  { id:7,  anio:2024, ncontrato:'2775-36-LE24',  nombre:'Rengo',               tipo:'poste',     estado:'completado', ubicacion:'Rengo',               contrato:39495016,   facturado:39495016,   avance:100, avanceProg:100, unidades:5,    plazo:91,  inicio:'2024-08-01', termino:'2024-10-31' },
+  { id:8,  anio:2024, ncontrato:'2483-309-LQ24', nombre:'Quilicura II',        tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:129999990,  facturado:129999990,  avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-10-11', termino:'2025-01-17' },
+  { id:9,  anio:2024, ncontrato:'5482-4-LR24',   nombre:'Ñuñoa',               tipo:'luminaria', estado:'completado', ubicacion:'Ñuñoa',               contrato:706649958,  facturado:706649958,  avance:100, avanceProg:100, unidades:1768, plazo:198, inicio:'2024-05-08', termino:'2024-11-22' },
+  { id:10, anio:2024, ncontrato:'4290-29-LE24',  nombre:'Limache',             tipo:'camara',    estado:'completado', ubicacion:'Limache',             contrato:50420164,   facturado:50420164,   avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-08-13', termino:'2024-11-19' },
+  { id:11, anio:2024, ncontrato:'2392-9-LQ24',   nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579,  facturado:166926578,  avance:100, avanceProg:100, unidades:274,  plazo:90,  inicio:'2024-07-18', termino:'2024-10-16' },
+  { id:12, anio:2024, ncontrato:'Privado',        nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',            contrato:89202933,   facturado:89202933,   avance:100, avanceProg:100, unidades:16,   plazo:145, inicio:'2024-07-04', termino:'2024-11-26' },
+  { id:13, anio:2025, ncontrato:'2430-32-LR24',  nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',         contrato:2360725400, facturado:684511200,  avance:95,  avanceProg:100, unidades:100,  plazo:287, inicio:'2025-07-21', termino:'2026-05-04' },
+  { id:14, anio:2024, ncontrato:'2490-70-LR24',  nombre:'Providencia',         tipo:'camara',    estado:'activo',     ubicacion:'Providencia',         contrato:479800000,  facturado:321457409,  avance:100, avanceProg:100, unidades:34,   plazo:310, inicio:'2025-03-17', termino:'2026-01-21' },
+  { id:15, anio:2024, ncontrato:'4160-23-LR24',  nombre:'Hualpén',             tipo:'luminaria', estado:'completado', ubicacion:'Hualpén',             contrato:2597763601, facturado:2597763601, avance:100, avanceProg:100, unidades:7560, plazo:131, inicio:'2025-04-01', termino:'2025-08-10' },
+  { id:16, anio:2024, ncontrato:'2490-87-LE24',  nombre:'Providencia II',      tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:43000000,   facturado:34025883,   avance:100, avanceProg:100, unidades:14,   plazo:98,  inicio:'2025-04-14', termino:'2025-07-21' },
+  { id:17, anio:2024, ncontrato:'Privado',        nombre:'Nevados de Chillán',  tipo:'luminaria', estado:'completado', ubicacion:'Chillán',             contrato:34649370,   facturado:34649370,   avance:100, avanceProg:100, unidades:63,   plazo:43,  inicio:'2025-03-26', termino:'2025-05-08' },
+  { id:18, anio:2025, ncontrato:'4726-1-LP25',   nombre:'UMCE',                tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:81700769,   facturado:81700769,   avance:100, avanceProg:100, unidades:144,  plazo:91,  inicio:'2025-05-22', termino:'2025-08-21' },
+  { id:19, anio:2025, ncontrato:'2369-70-LR24',  nombre:'Arica',               tipo:'luminaria', estado:'activo',     ubicacion:'Arica',               contrato:952929114,  facturado:285535954,  avance:61,  avanceProg:79,  unidades:689,  plazo:289, inicio:'2025-09-24', termino:'2026-07-10' },
+  { id:20, anio:2025, ncontrato:'4459-27-LR24',  nombre:'Pichilemu',           tipo:'luminaria', estado:'activo',     ubicacion:'Pichilemu',           contrato:70000000,   facturado:70000000,   avance:82,  avanceProg:100, unidades:2255, plazo:90,  inicio:'2025-11-13', termino:'2026-02-11' },
+  { id:21, anio:2026, ncontrato:'2384-41-LR25',  nombre:'Calama',              tipo:'luminaria', estado:'activo',     ubicacion:'Calama',              contrato:800000000,  facturado:0,          avance:0,   avanceProg:0,   unidades:144,  plazo:180, inicio:'2026-05-18', termino:'2026-11-14' },
+  { id:22, anio:2026, ncontrato:'2581-32-LR25',  nombre:'Conchalí',            tipo:'luminaria', estado:'activo',     ubicacion:'Conchalí',            contrato:1251426033, facturado:0,          avance:0,   avanceProg:0,   unidades:5000, plazo:240, inicio:'2026-05-25', termino:'2027-01-20' },
+];
+
+// ══════════════════════════════════════════════════════
+// UTILIDADES
+// ══════════════════════════════════════════════════════
+const fmtCLP  = n => '$' + Math.round(n).toLocaleString('es-CL');
+const fmtM    = n => { const m = n/1000000; return '$' + m.toFixed(1).replace('.',',') + ' M'; };
+const pct     = n => `${n}%`;
+
+function saldoFacturable(p) {
+  const ganado = p.contrato * p.avance / 100;
+  return Math.max(0, ganado - p.facturado);
+}
+function pctFacturado(p) { return p.contrato > 0 ? Math.round(p.facturado / p.contrato * 100) : 0; }
+function diferencia(p)   { return p.facturado - p.contrato; }
+
+function estadoBadge(e) {
+  const m = { activo:'badge-green', completado:'badge-blue', pausado:'badge-yellow' };
+  const l = { activo:'En Ejecución', completado:'Completado', pausado:'Pausado' };
+  return `<span class="badge ${m[e]}">${l[e]}</span>`;
+}
+function tipoTag(t) {
+  if (t === 'luminaria') return `<span class="type-lum">💡 Luminaria</span>`;
+  if (t === 'camara')    return `<span class="type-cam">📷 Televigilancia</span>`;
+  if (t === 'poste')     return `<span class="type-poste">🏙️ Poste Int.</span>`;
+}
+function progressBar(v) {
+  const c = v >= 100 ? '#22c55e' : v >= 70 ? '#4d61ff' : v >= 40 ? '#f5c518' : '#ff3d6b';
+  return `<div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(v,100)}%;background:${c}"></div></div>
+    <div class="progress-label">${v}%</div>
+  </div>`;
+}
+function progressBarDual(real, prog) {
+  const atrasado = prog > 0 && real < prog;
+  const cr = atrasado ? '#ff3d6b' : '#22c55e';
+  return `<div class="prog-dual">
+    <div class="prog-labels"><span>Prog: ${prog}%</span><span>Real: ${real}%</span></div>
+    <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(prog,100)}%;background:#4d61ff"></div></div>
+    <div class="prog-bar-thin"><div class="fill" style="width:${Math.min(real,100)}%;background:${cr}"></div></div>
+  </div>`;
+}
+function fmtFecha(d) {
+  if (!d || d === '—') return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+function diasRestantes(termino) {
+  if (!termino || termino === '—') return null;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const fin = new Date(termino);
+  return Math.ceil((fin - hoy) / 86400000);
+}
+
+// ══════════════════════════════════════════════════════
+// FILTROS
+// ══════════════════════════════════════════════════════
+let filterTipo   = 'todos';
+let filterEstado = 'todos';
+let filterFactura= 'todos';
+let searchTerm   = '';
+let editId       = null;
+let detailId     = null;
+
+function proyectosFiltrados() {
+  return proyectos.filter(p => {
+    const mt = filterTipo   === 'todos' || p.tipo   === filterTipo;
+    const me = filterEstado === 'todos' || p.estado === filterEstado;
+    const ms = !searchTerm  || p.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+                            || p.ubicacion.toLowerCase().includes(searchTerm.toLowerCase())
+                            || p.ncontrato.toLowerCase().includes(searchTerm.toLowerCase());
+    return mt && me && ms;
+  });
+}
+function setFilter(val, campo, el) {
+  if (campo === 'tipo')   { filterTipo   = val; filterEstado = 'todos'; }
+  if (campo === 'estado') { filterEstado = val; filterTipo   = 'todos'; }
+  document.querySelectorAll('#view-proyectos .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderProyectos();
+}
+function setFactFilter(val, el) {
+  filterFactura = val;
+  document.querySelectorAll('#view-facturacion .filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderFacturacion();
+}
+function buscar(v) { searchTerm = v; renderProyectos(); }
+
+// ══════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════════════════
+const TITLES = {
+  dashboard:'Dashboard', proyectos:'Proyectos', facturacion:'Facturación',
+  flujo:'Flujo Proyectado',
+  luminarias:'Luminarias', camaras:'Televigilancia', postes:'Postes Inteligentes',
+  activos:'En Ejecución', completados:'Completados'
+};
+function navigate(view, sidebarEl, mobileEl) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  if (sidebarEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    sidebarEl.classList.add('active');
+  }
+  if (mobileEl) {
+    document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+    mobileEl.classList.add('active');
+  }
+  document.getElementById('page-title').textContent = TITLES[view] || view;
+  renderView(view);
+}
+function renderView(v) {
+  const map = {
+    dashboard: renderDashboard, proyectos: renderProyectos, facturacion: renderFacturacion,
+    flujo: renderFlujoProyectado,
+    luminarias: () => renderTipoTable('lum','luminaria'),
+    camaras:    () => renderTipoTable('cam','camara'),
+    postes:     () => renderTipoTable('pos','poste'),
+    activos:    () => renderEstadoTable('activos','activo'),
+    completados:() => renderEstadoTable('completados','completado'),
+  };
+  if (map[v]) map[v]();
+}
+
+// ══════════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════════
+let chartTipo, chartFactura, chartFlujo, chartFlujo2;
+
+function renderDashboard() {
+  const ps = proyectos;
+  const totalContrato  = ps.reduce((a,p)=>a+p.contrato,0);
+  const totalFacturado = ps.reduce((a,p)=>a+p.facturado,0);
+  const totalSaldoF    = ps.reduce((a,p)=>a+saldoFacturable(p),0);
+  const activos        = ps.filter(p=>p.estado==='activo');
+  const avgAvance      = activos.length ? Math.round(activos.reduce((a,p)=>a+p.avance,0)/activos.length) : 0;
+
+  const conRetraso = activos.filter(p => p.avanceProg > 0 && p.avance < p.avanceProg).length;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="label">Total Proyectos</div>
+      <div class="value">${ps.length}</div>
+      <div class="sub">${activos.length} en ejecución · ${ps.filter(p=>p.estado==='completado').length} completados</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Avance Prom. (activos)</div>
+      <div class="value">${avgAvance}%</div>
+      <div class="sub">${activos.length} proyectos activos</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Con Retraso</div>
+      <div class="value">${conRetraso}</div>
+      <div class="sub">real < programado</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Total Facturado</div>
+      <div class="value">${fmtM(totalFacturado)}</div>
+      <div class="sub">de ${fmtM(totalContrato)} contratados</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Saldo Total x Facturar</div>
+      <div class="value">${fmtM(ps.reduce((a,p)=>a+Math.max(0,p.contrato-p.facturado),0))}</div>
+      <div class="sub">incluye contratos no iniciados</div>
+    </div>
+  `;
+
+  // Tabla activos
+  const actList = ps.filter(p=>p.estado==='activo');
+  document.getElementById('tbody-dashboard').innerHTML = actList.map(p => {
+    const dr = diasRestantes(p.termino);
+    const drLabel = dr === null ? '—' : dr < 0
+      ? `<span style="color:var(--accent-red)">Vencido ${Math.abs(dr)}d</span>`
+      : dr <= 30
+        ? `<span style="color:var(--accent-orange)">${dr}d restantes</span>`
+        : `<span style="color:var(--text-muted)">${dr}d · ${fmtFecha(p.termino)}</span>`;
+    return `<tr onclick="openDetail(${p.id})" style="cursor:pointer">
+      <td><strong>${p.nombre}</strong><br><small style="color:var(--text-muted)">${p.ncontrato}</small></td>
+      <td>${tipoTag(p.tipo)}</td>
+      <td>${progressBarDual(p.avance, p.avanceProg)}</td>
+      <td>${fmtCLP(p.contrato)}</td>
+      <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
+      <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldoFacturable(p))}</td>
+      <td style="font-size:11px">${drLabel}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin proyectos activos</td></tr>`;
+
+  // Chart contratado vs facturado por tipo
+  const tiposChart  = ['luminaria','camara','poste'];
+  const labelsChart = ['Luminarias','Televigilancia','Postes Int.'];
+  const contratados  = tiposChart.map(t => ps.filter(p=>p.tipo===t).reduce((a,p)=>a+p.contrato,0));
+  const facturados   = tiposChart.map(t => ps.filter(p=>p.tipo===t).reduce((a,p)=>a+p.facturado,0));
+
+  if (chartTipo) chartTipo.destroy();
+  chartTipo = new Chart(document.getElementById('chartTipo'), {
+    type: 'bar',
+    data: {
+      labels: labelsChart,
+      datasets: [
+        { label:'Contratado', data: contratados, backgroundColor:'rgba(77,97,255,.45)', borderColor:'#4d61ff', borderWidth:2, borderRadius:4 },
+        { label:'Facturado',  data: facturados,  backgroundColor:'rgba(34,197,94,.55)', borderColor:'#22c55e', borderWidth:2, borderRadius:4 },
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#7d90a8', padding:12, boxWidth:10, font:{size:10} } },
+        tooltip:{ callbacks:{ label: ctx => ' ' + fmtM(ctx.raw) } }
+      },
+      scales:{
+        x:{ ticks:{ color:'#7d90a8' }, grid:{ display:false } },
+        y:{ ticks:{ color:'#7d90a8', callback: v => fmtM(v) }, grid:{ color:'#243d56' } }
+      }
+    }
+  });
+
+  // Chart facturación por año y tipo (barras apiladas)
+  const años = [...new Set(ps.map(p=>p.anio))].sort();
+  const lumPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='luminaria').reduce((a,p)=>a+p.facturado,0));
+  const camPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='camara').reduce((a,p)=>a+p.facturado,0));
+  const posPorAño = años.map(y=>ps.filter(p=>p.anio===y&&p.tipo==='poste').reduce((a,p)=>a+p.facturado,0));
+
+  if (chartFactura) chartFactura.destroy();
+  chartFactura = new Chart(document.getElementById('chartFactura'), {
+    type: 'bar',
+    data: {
+      labels: años,
+      datasets: [
+        { label:'Luminarias',    data: lumPorAño, backgroundColor:'rgba(245,197,24,.7)',  borderColor:'#f5c518', borderWidth:2, borderRadius:4 },
+        { label:'Televigilancia',data: camPorAño, backgroundColor:'rgba(168,85,247,.7)',  borderColor:'#a855f7', borderWidth:2, borderRadius:4 },
+        { label:'Postes Int.',   data: posPorAño, backgroundColor:'rgba(249,115,22,.7)',  borderColor:'#f97316', borderWidth:2, borderRadius:4 },
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#7d90a8', padding:12, boxWidth:10, font:{size:10} } },
+        tooltip:{ callbacks:{ label: ctx => ' ' + fmtM(ctx.raw) } }
+      },
+      scales:{
+        x:{ stacked:true, ticks:{ color:'#7d90a8' }, grid:{ display:false } },
+        y:{ stacked:true, ticks:{ color:'#7d90a8', callback: v => fmtM(v) }, grid:{ color:'#243d56' } }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// TODOS LOS PROYECTOS
+// ══════════════════════════════════════════════════════
+function renderProyectos() {
+  const ps = proyectosFiltrados();
+  const totalC = ps.reduce((a,p)=>a+p.contrato,0);
+  const totalF = ps.reduce((a,p)=>a+p.facturado,0);
+  const totalS = ps.reduce((a,p)=>a+saldoFacturable(p),0);
+
+  const rows = ps.map(p => {
+    const sf = saldoFacturable(p);
+    const pf = pctFacturado(p);
+    return `<tr>
+      <td style="color:var(--text-muted)">${p.anio}</td>
+      <td style="color:var(--text-muted);font-size:11px">${p.ncontrato}</td>
+      <td><strong style="cursor:pointer;color:var(--accent-blue)" onclick="openDetail(${p.id})">${p.nombre}</strong><br>
+        <small style="color:var(--text-muted)">${p.ubicacion}</small></td>
+      <td>${tipoTag(p.tipo)}</td>
+      <td>${fmtCLP(p.contrato)}</td>
+      <td>${progressBar(p.avance)}</td>
+      <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
+      <td><span class="badge ${pf>=100?'badge-green':pf>=70?'badge-blue':'badge-yellow'}">${pf}%</span></td>
+      <td style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</td>
+      <td>${estadoBadge(p.estado)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openDetail(${p.id})">Ver</button></td>
+    </tr>`;
+  }).join('');
+
+  const totals = `<tr class="totals-row">
+    <td colspan="4">TOTAL (${ps.length} proyectos)</td>
+    <td>${fmtCLP(totalC)}</td>
+    <td></td>
+    <td style="color:var(--accent-green)">${fmtCLP(totalF)}</td>
+    <td><span class="badge badge-blue">${Math.round(totalF/totalC*100)||0}%</span></td>
+    <td style="color:var(--accent-red);font-weight:800">${fmtCLP(totalS)}</td>
+    <td colspan="2"></td>
+  </tr>`;
+
+  document.getElementById('tbody-proyectos').innerHTML = rows + totals;
+}
+
+// ══════════════════════════════════════════════════════
+// VISTAS POR TIPO
+// ══════════════════════════════════════════════════════
+function renderTipoTable(tbodyId, tipo) {
+  const ps = proyectos.filter(p=>p.tipo===tipo);
+  const totalC = ps.reduce((a,p)=>a+p.contrato,0);
+  const totalF = ps.reduce((a,p)=>a+p.facturado,0);
+  const totalS = ps.reduce((a,p)=>a+saldoFacturable(p),0);
+
+  const rows = ps.map(p => {
+    const sf = saldoFacturable(p);
+    return `<tr>
+      <td style="color:var(--text-muted)">${p.anio}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${p.ncontrato}</td>
+      <td><strong style="cursor:pointer;color:var(--accent-blue)" onclick="openDetail(${p.id})">${p.nombre}</strong><br>
+        <small style="color:var(--text-muted)">${p.ubicacion}</small></td>
+      <td>${progressBar(p.avance)}</td>
+      <td>${fmtCLP(p.contrato)}</td>
+      <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
+      <td style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</td>
+      <td>${estadoBadge(p.estado)}</td>
+    </tr>`;
+  }).join('');
+
+  const totals = `<tr class="totals-row">
+    <td colspan="4">TOTAL (${ps.length} proyectos)</td>
+    <td>${fmtCLP(totalC)}</td>
+    <td style="color:var(--accent-green)">${fmtCLP(totalF)}</td>
+    <td style="color:var(--accent-red)">${fmtCLP(totalS)}</td>
+    <td></td>
+  </tr>`;
+
+  document.getElementById('tbody-'+tbodyId).innerHTML = rows + totals;
+}
+
+// ══════════════════════════════════════════════════════
+// VISTAS POR ESTADO
+// ══════════════════════════════════════════════════════
+function renderEstadoTable(tbodyId, estado) {
+  const ps = proyectos.filter(p=>p.estado===estado);
+  const totalC = ps.reduce((a,p)=>a+p.contrato,0);
+  const totalF = ps.reduce((a,p)=>a+p.facturado,0);
+  const totalS = ps.reduce((a,p)=>a+saldoFacturable(p),0);
+
+  let rows = '';
+  if (estado === 'activo') {
+    rows = ps.map(p => {
+      const dr = diasRestantes(p.termino);
+      const atrasado = p.avanceProg > 0 && p.avance < p.avanceProg;
+      const drStyle = dr !== null && dr < 0 ? 'color:var(--accent-red)' : dr !== null && dr <= 30 ? 'color:var(--accent-orange)' : 'color:var(--text-muted)';
+      const drText  = dr === null ? '—' : dr < 0 ? `Vencido ${Math.abs(dr)}d` : `${dr}d · ${fmtFecha(p.termino)}`;
+      return `<tr>
+        <td>
+          <strong style="cursor:pointer;color:var(--accent-blue)" onclick="openDetail(${p.id})">${p.nombre}</strong><br>
+          <small style="color:var(--text-muted)">${p.ncontrato} · ${p.ubicacion}</small>
+          ${atrasado ? '<br><span class="badge badge-orange" style="margin-top:2px">⚠ Retraso</span>' : ''}
+        </td>
+        <td>${tipoTag(p.tipo)}</td>
+        <td style="font-weight:700;color:var(--text)">${p.unidades ? p.unidades.toLocaleString('es-CL') : '—'}</td>
+        <td>${progressBarDual(p.avance, p.avanceProg)}</td>
+        <td style="font-size:11px;color:var(--text-muted)">${fmtFecha(p.inicio)}</td>
+        <td style="font-size:11px;${drStyle}">${drText}</td>
+        <td>${fmtCLP(p.contrato)}</td>
+        <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
+        <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldoFacturable(p))}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    rows = ps.map(p => {
+      const diff = diferencia(p);
+      return `<tr>
+        <td style="color:var(--text-muted)">${p.anio}</td>
+        <td style="font-size:11px;color:var(--text-muted)">${p.ncontrato}</td>
+        <td><strong style="cursor:pointer;color:var(--accent-blue)" onclick="openDetail(${p.id})">${p.nombre}</strong><br>
+          <small style="color:var(--text-muted)">${p.ubicacion}</small></td>
+        <td>${tipoTag(p.tipo)}</td>
+        <td>${fmtCLP(p.contrato)}</td>
+        <td style="color:var(--accent-green)">${fmtCLP(p.facturado)}</td>
+        <td style="color:${diff<0?'var(--accent-red)':diff>0?'var(--accent-yellow)':'var(--text-muted)'}">${fmtCLP(diff)}</td>
+        <td><span class="badge ${pctFacturado(p)>=100?'badge-green':'badge-yellow'}">${pctFacturado(p)}%</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const totals = estado === 'activo'
+    ? `<tr class="totals-row">
+        <td colspan="6">TOTAL (${ps.length} proyectos)</td>
+        <td>${fmtCLP(totalC)}</td>
+        <td style="color:var(--accent-green)">${fmtCLP(totalF)}</td>
+        <td style="color:var(--accent-red)">${fmtCLP(totalS)}</td>
+      </tr>`
+    : `<tr class="totals-row">
+        <td colspan="4">TOTAL (${ps.length} proyectos)</td>
+        <td>${fmtCLP(totalC)}</td>
+        <td style="color:var(--accent-green)">${fmtCLP(totalF)}</td>
+        <td style="color:${totalF-totalC<0?'var(--accent-red)':'var(--accent-yellow)'}">
+          ${fmtCLP(totalF-totalC)}</td>
+        <td><span class="badge badge-blue">${Math.round(totalF/totalC*100)||0}%</span></td></tr>`;
+
+  document.getElementById('tbody-'+tbodyId).innerHTML = rows + totals;
+}
+
+// ══════════════════════════════════════════════════════
+// DATOS FLUJO DE CAJA CONSOLIDADO CINSA
+// Fuente: 20260505 Flujo de Caja Consolidado CINSA.xlsx
+// Snapshot legible: 20250728 (real hasta jul-25; proyectado ago-dic 25)
+// ══════════════════════════════════════════════════════
+const FLUJO_CAJA = {
+  archivo: '20260505 Flujo de Caja Consolidado CINSA.xlsx',
+  snapshot: '2025-07-30',
+  margenDirecto2025: 26.51,
+  margenOperacional2025: 18.47,
+  ventasTotal2025: 8497243749,
+  ventasTotal2026: 11408990314,
+  meses: [
+    // real:true = dato real; real:false = proyección al 30-jul-2025
+    {m:'2024-11', ventas:311463206,  ro:-114632494,  real:true},
+    {m:'2024-12', ventas:464313748,  ro:-349376535,  real:true},
+    {m:'2025-01', ventas:157442041,  ro: 54393940,   real:true},
+    {m:'2025-02', ventas:314565366,  ro:155557302,   real:true},
+    {m:'2025-03', ventas:0,          ro:-141855807,  real:true},
+    {m:'2025-04', ventas:208130238,  ro:    765522,  real:true},
+    {m:'2025-05', ventas:386433872,  ro: -95256851,  real:true},
+    {m:'2025-06', ventas:1145876066, ro:  41961522,  real:true},
+    {m:'2025-07', ventas:365394620,  ro: -45771103,  real:true},
+    {m:'2025-08', ventas:2029490603, ro:1559293075,  real:false},
+    {m:'2025-09', ventas:1790879834, ro:-687445433,  real:false},
+    {m:'2025-10', ventas:1796433772, ro: 820544641,  real:false},
+    {m:'2025-11', ventas:964671121,  ro: 297140280,  real:false},
+    {m:'2025-12', ventas:39459892,   ro: 763910011,  real:false},
+  ]
+};
+
+// ══════════════════════════════════════════════════════
+// FLUJO PROYECTADO
+// ══════════════════════════════════════════════════════
+function calcularFlujo() {
+  const hoy = new Date(); hoy.setDate(1); hoy.setHours(0,0,0,0);
+  const meses = [];
+  for (let i = 0; i < 18; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    meses.push({ year: d.getFullYear(), month: d.getMonth(), total: 0, proyectos: [] });
+  }
+  proyectos.filter(p => p.estado === 'activo').forEach(p => {
+    const saldo = Math.max(0, p.contrato - p.facturado);
+    if (saldo <= 0) return;
+    const inicioP = p.inicio && p.inicio !== '—' ? new Date(p.inicio) : hoy;
+    const terminoP = p.termino && p.termino !== '—' ? new Date(p.termino) : null;
+    if (!terminoP) return;
+    terminoP.setDate(1);
+    const mesesActivos = meses.filter(m => {
+      const fm = new Date(m.year, m.month, 1);
+      return fm >= (inicioP < hoy ? hoy : new Date(inicioP.getFullYear(), inicioP.getMonth(), 1))
+          && fm <= new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
+    });
+    if (!mesesActivos.length) return;
+    const porMes = saldo / mesesActivos.length;
+    mesesActivos.forEach(m => {
+      m.total += porMes;
+      m.proyectos.push({ nombre: p.nombre, monto: porMes });
+    });
+  });
+  return meses;
+}
+
+function renderFlujoProyectado() {
+  const meses = calcularFlujo();
+  const MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const labels = meses.map(m => `${MESES_ES[m.month]} ${m.year}`);
+  const valores = meses.map(m => m.total);
+  const total12 = valores.slice(0, 12).reduce((a, v) => a + v, 0);
+  const mesMax = meses.reduce((a, m) => m.total > a.total ? m : a, meses[0]);
+  const activos = proyectos.filter(p => p.estado === 'activo' && Math.max(0, p.contrato - p.facturado) > 0);
+
+  const roReal2025 = FLUJO_CAJA.meses.filter(d => d.m.startsWith('2025') && d.real).reduce((a,d) => a+d.ro, 0);
+
+  document.getElementById('kpi-flujo').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="label">Proyectado próx. 12 meses</div>
+      <div class="value">${fmtM(total12)}</div>
+      <div class="sub">desde contratos activos</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Mes de mayor ingreso</div>
+      <div class="value">${MESES_ES[mesMax.month]} ${mesMax.year}</div>
+      <div class="sub">${fmtM(mesMax.total)} estimado</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Proyectos con saldo</div>
+      <div class="value">${activos.length}</div>
+      <div class="sub">generando flujo activo</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="label">Ventas proyectadas 2025</div>
+      <div class="value">${fmtM(FLUJO_CAJA.ventasTotal2025)}</div>
+      <div class="sub">flujo de caja consolidado</div>
+    </div>
+    <div class="kpi-card ${roReal2025 >= 0 ? 'green' : 'red'}">
+      <div class="label">Resultado Op. real ene–jul 2025</div>
+      <div class="value">${fmtM(roReal2025)}</div>
+      <div class="sub">margen directo ${FLUJO_CAJA.margenDirecto2025}%</div>
+    </div>
+  `;
+
+  if (chartFlujo) chartFlujo.destroy();
+  chartFlujo = new Chart(document.getElementById('chartFlujo'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Facturación proyectada',
+        data: valores,
+        backgroundColor: valores.map((v,i) => i === 0 ? 'rgba(255,61,107,.7)' : 'rgba(77,97,255,.6)'),
+        borderColor:     valores.map((v,i) => i === 0 ? '#ff3d6b' : '#4d61ff'),
+        borderWidth: 2, borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + fmtM(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color:'#7d90a8', maxRotation:45 }, grid: { display:false } },
+        y: { ticks: { color:'#7d90a8', callback: v => fmtM(v) }, grid: { color:'#243d56' } }
+      }
+    }
+  });
+
+  // ── Gráfico 2: Ventas + Resultado Operacional del Flujo de Caja ──
+  const MESES_ES2 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const fcLabels = FLUJO_CAJA.meses.map(d => {
+    const [y,m] = d.m.split('-');
+    return `${MESES_ES2[+m-1]} ${y.slice(2)}`;
+  });
+  const fcVentasReal = FLUJO_CAJA.meses.map(d => d.real ? d.ventas : null);
+  const fcVentasProy = FLUJO_CAJA.meses.map(d => !d.real ? d.ventas : null);
+  const fcRO        = FLUJO_CAJA.meses.map(d => d.ro);
+
+  document.getElementById('flujo-fuente').textContent =
+    `Fuente: ${FLUJO_CAJA.archivo} · snapshot ${FLUJO_CAJA.snapshot}`;
+
+  if (chartFlujo2) chartFlujo2.destroy();
+  chartFlujo2 = new Chart(document.getElementById('chartFlujo2'), {
+    type: 'bar',
+    data: {
+      labels: fcLabels,
+      datasets: [
+        {
+          label: 'Ventas reales',
+          data: fcVentasReal,
+          backgroundColor: 'rgba(77,97,255,.75)',
+          borderColor: '#4d61ff',
+          borderWidth: 2, borderRadius: 4, order: 2
+        },
+        {
+          label: 'Ventas proyectadas',
+          data: fcVentasProy,
+          backgroundColor: 'rgba(77,97,255,.28)',
+          borderColor: 'rgba(77,97,255,.5)',
+          borderWidth: 1, borderRadius: 4, order: 3
+        },
+        {
+          label: 'Resultado Operacional',
+          data: fcRO,
+          type: 'line',
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,.1)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: fcRO.map(v => v >= 0 ? '#22c55e' : '#ff3d6b'),
+          tension: 0.3,
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${fmtM(ctx.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color:'#7d90a8', maxRotation:45 }, grid: { display:false } },
+        y: {
+          ticks: { color:'#7d90a8', callback: v => fmtM(v) },
+          grid: { color:'#243d56' }
+        }
+      }
+    }
+  });
+
+  const tbody = activos.map(p => {
+    const saldo = Math.max(0, p.contrato - p.facturado);
+    const inicioP = p.inicio && p.inicio !== '—' ? new Date(p.inicio) : new Date();
+    const terminoP = p.termino && p.termino !== '—' ? new Date(p.termino) : null;
+    const hoy = new Date(); hoy.setDate(1);
+    const desde = inicioP < hoy ? hoy : new Date(inicioP.getFullYear(), inicioP.getMonth(), 1);
+    let mesesR = 0;
+    if (terminoP) {
+      const fin = new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
+      while (desde <= fin) { mesesR++; desde.setMonth(desde.getMonth() + 1); }
+    }
+    const promMes = mesesR > 0 ? saldo / mesesR : 0;
+    return `<tr>
+      <td><strong>${p.nombre}</strong><br><small style="color:var(--text-muted)">${p.ncontrato}</small></td>
+      <td>${tipoTag(p.tipo)}</td>
+      <td style="color:var(--accent-red);font-weight:700">${fmtCLP(saldo)}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${fmtFecha(p.inicio)}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${fmtFecha(p.termino)}</td>
+      <td style="text-align:center;font-weight:700">${mesesR}</td>
+      <td style="color:var(--accent-blue);font-weight:700">${fmtCLP(promMes)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tbody-flujo').innerHTML = tbody || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin proyectos activos con saldo</td></tr>`;
+}
+
+// ══════════════════════════════════════════════════════
+// FACTURACIÓN
+// ══════════════════════════════════════════════════════
+function renderFacturacion() {
+  const ps = proyectos;
+  const totalC  = ps.reduce((a,p)=>a+p.contrato,0);
+  const totalF  = ps.reduce((a,p)=>a+p.facturado,0);
+  const totalSF = ps.reduce((a,p)=>a+saldoFacturable(p),0);
+  const pctTot  = Math.round(totalF/totalC*100);
+
+  document.getElementById('kpi-factura').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="label">Total Contratos (Neto)</div>
+      <div class="value">${fmtM(totalC)}</div>
+      <div class="sub">${ps.length} proyectos</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Total Facturado</div>
+      <div class="value">${fmtM(totalF)}</div>
+      <div class="sub">${pctTot}% del total contratado</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Saldo Ganado x Facturar</div>
+      <div class="value">${fmtM(totalSF)}</div>
+      <div class="sub">según avance físico real</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Saldo Total por Contratar</div>
+      <div class="value">${fmtM(totalC - totalF)}</div>
+      <div class="sub">incluyendo trabajo no iniciado</div>
+    </div>
+  `;
+
+  const psFilt = filterFactura === 'todos' ? ps : ps.filter(p=>p.estado===filterFactura);
+
+  document.getElementById('lista-facturas').innerHTML = psFilt.map(p => {
+    const sf = Math.max(0, p.contrato - p.facturado);
+    const pf = pctFacturado(p);
+    return `
+    <div class="factura-card">
+      <div class="factura-header">
+        <div>
+          <h4>${p.nombre}</h4>
+          <small style="color:var(--text-muted)">${p.ncontrato} · ${p.ubicacion} · ${p.anio}</small><br>
+          <span style="margin-top:4px;display:inline-block">${tipoTag(p.tipo)} &nbsp; ${estadoBadge(p.estado)}</span>
+        </div>
+        ${progressBar(p.avance)}
+      </div>
+      <div class="factura-amounts">
+        <div class="amount-box">
+          <div class="alabel">Contrato Neto</div>
+          <div class="avalue" style="color:var(--accent-blue)">${fmtCLP(p.contrato)}</div>
+        </div>
+        <div class="amount-box">
+          <div class="alabel">Total Facturado</div>
+          <div class="avalue" style="color:var(--accent-green)">${fmtCLP(p.facturado)}</div>
+        </div>
+        <div class="amount-box">
+          <div class="alabel">% Facturado</div>
+          <div class="avalue" style="color:${pf>=100?'var(--accent-green)':pf>=70?'var(--accent-blue)':'var(--accent-yellow)'}">${pf}%</div>
+        </div>
+        <div class="amount-box">
+          <div class="alabel">Saldo x Facturar</div>
+          <div class="avalue" style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// MODAL NUEVO / EDITAR
+// ══════════════════════════════════════════════════════
+function openModal(p) {
+  editId = p ? p.id : null;
+  document.getElementById('modal-title').textContent = p ? 'Editar Proyecto' : 'Nuevo Proyecto';
+  const set = (id, v) => { document.getElementById(id).value = v ?? ''; };
+  if (p) {
+    set('f-nombre', p.nombre); set('f-tipo', p.tipo); set('f-estado', p.estado);
+    set('f-anio', p.anio); set('f-ncontrato', p.ncontrato); set('f-ubicacion', p.ubicacion);
+    set('f-contrato', p.contrato); set('f-facturado', p.facturado); set('f-avance', p.avance);
+    set('f-plazo', p.plazo); set('f-inicio', p.inicio === '—' ? '' : p.inicio);
+    set('f-termino', p.termino === '—' ? '' : p.termino);
+  } else {
+    ['f-nombre','f-ubicacion','f-contrato','f-facturado','f-avance','f-plazo','f-inicio','f-termino','f-ncontrato']
+      .forEach(id => set(id,''));
+    set('f-anio', new Date().getFullYear());
+  }
+  document.getElementById('modal-new').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-new').classList.remove('open'); editId = null; }
+
+function guardarProyecto() {
+  const g = id => document.getElementById(id).value;
+  const p = {
+    id: editId || Date.now(),
+    anio:      +g('f-anio')      || new Date().getFullYear(),
+    nombre:    g('f-nombre')     || 'Sin nombre',
+    tipo:      g('f-tipo'),
+    estado:    g('f-estado'),
+    ubicacion: g('f-ubicacion')  || '—',
+    ncontrato: g('f-ncontrato')  || '—',
+    contrato:  +g('f-contrato')  || 0,
+    facturado: +g('f-facturado') || 0,
+    avance:    +g('f-avance')    || 0,
+    plazo:     +g('f-plazo')     || null,
+    inicio:    g('f-inicio')     || '—',
+    termino:   g('f-termino')    || '—',
+  };
+  if (editId) proyectos = proyectos.map(x => x.id === editId ? p : x);
+  else proyectos.push(p);
+  closeModal(); closeDetail();
+  renderDashboard(); renderProyectos();
+}
+
+// ══════════════════════════════════════════════════════
+// MODAL DETALLE
+// ══════════════════════════════════════════════════════
+function openDetail(id) {
+  detailId = id;
+  const p = proyectos.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('detail-title').textContent = p.nombre;
+  const sf = saldoFacturable(p);
+  const pf = pctFacturado(p);
+  const dr = diasRestantes(p.termino);
+  const atrasado = p.avanceProg > 0 && p.avance < p.avanceProg;
+  const drColor = dr !== null && dr < 0 ? 'var(--accent-red)' : dr !== null && dr <= 30 ? 'var(--accent-orange)' : 'var(--text)';
+  const drText  = dr === null ? '—' : dr < 0 ? `Vencido hace ${Math.abs(dr)} días` : `${dr} días restantes`;
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-item"><div class="dlabel">N° / ID Contrato</div><div class="dvalue">${p.ncontrato}</div></div>
+    <div class="detail-item"><div class="dlabel">Año Adjudicación</div><div class="dvalue">${p.anio}</div></div>
+    <div class="detail-item"><div class="dlabel">Tipo</div><div class="dvalue">${tipoTag(p.tipo)}</div></div>
+    <div class="detail-item"><div class="dlabel">Estado</div><div class="dvalue">${estadoBadge(p.estado)}${atrasado?' <span class="badge badge-orange">⚠ Retraso</span>':''}</div></div>
+    <div class="detail-item"><div class="dlabel">Ubicación</div><div class="dvalue">${p.ubicacion}</div></div>
+    <div class="detail-item"><div class="dlabel">Unidades</div><div class="dvalue">${p.unidades ? p.unidades.toLocaleString('es-CL') : '—'}</div></div>
+    <div class="detail-item"><div class="dlabel">Fecha Inicio</div><div class="dvalue">${fmtFecha(p.inicio)}</div></div>
+    <div class="detail-item"><div class="dlabel">Fecha Término</div><div class="dvalue" style="color:${drColor}">${fmtFecha(p.termino)}<br><small>${drText}</small></div></div>
+    <div class="detail-item" style="grid-column:1/-1"><div class="dlabel">Avance Programado vs Real</div><div class="dvalue" style="margin-top:4px">${progressBarDual(p.avance, p.avanceProg)}</div></div>
+    <div class="detail-item"><div class="dlabel">Valor Contrato Neto</div><div class="dvalue" style="color:var(--accent-blue)">${fmtCLP(p.contrato)}</div></div>
+    <div class="detail-item"><div class="dlabel">Total Facturado</div><div class="dvalue" style="color:var(--accent-green)">${fmtCLP(p.facturado)}</div></div>
+    <div class="detail-item"><div class="dlabel">% Facturado</div><div class="dvalue">${pf}%</div></div>
+    <div class="detail-item"><div class="dlabel">Saldo Ganado x Facturar</div><div class="dvalue" style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</div></div>
+  `;
+  document.getElementById('modal-detail').classList.add('open');
+}
+function closeDetail() { document.getElementById('modal-detail').classList.remove('open'); detailId = null; }
+function editarDesdeDetalle() { const p = proyectos.find(x=>x.id===detailId); closeDetail(); openModal(p); }
+
+// Cerrar modales al hacer click fuera
+document.getElementById('modal-new').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+document.getElementById('modal-detail').addEventListener('click', e => { if(e.target===e.currentTarget) closeDetail(); });
+
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════════
+const USUARIOS = {
+  'javier':    'Cinsa@2025',
+  'natalia':   'Nat#Cinsa25',
+  'carlos':    'Car#Cinsa25',
+  'matias':    'Mat#Cinsa25',
+  'guillermo': 'Guill@2025',
+  'yasna':     'Yas#Cinsa25'
+};
+
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value;
+  if (USUARIOS[user] && USUARIOS[user] === pass) {
+    sessionStorage.setItem('cinsa-auth', user);
+    document.getElementById('login-overlay').style.display = 'none';
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+function checkAuth() {
+  const auth = sessionStorage.getItem('cinsa-auth');
+  if (!auth) {
+    document.getElementById('login-overlay').style.display = 'flex';
+  } else {
+    document.getElementById('login-overlay').style.display = 'none';
+  }
+}
+
+// INIT
+// ══════════════════════════════════════════════════════
+checkAuth();
+renderDashboard();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
