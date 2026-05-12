@@ -432,11 +432,12 @@
           <tbody id="tbody-contab-pl"></tbody>
         </table>
       </div>
-      <div class="section-header"><h3>Costos Directos por Centro de Costo (2026)</h3></div>
+      <div class="section-header"><h3>Resultado por Proyecto — Softland vs Contrato</h3></div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>CC</th><th>Proyecto</th><th>Ingresos</th><th>Costos Directos</th><th>Resultado</th>
+            <th>CC</th><th>Proyecto</th><th>Avance</th><th>Contrato</th><th>Facturado</th>
+            <th>Ingresos 2026</th><th>Costos 2026</th><th>Resultado 2026</th><th>Margen</th>
           </tr></thead>
           <tbody id="tbody-contab-cc"></tbody>
         </table>
@@ -1406,29 +1407,46 @@ function renderContabilidad() {
   </tr>`;
   document.getElementById('tbody-contab-pl').innerHTML = plRows;
 
-  // CC table
+  // CC table — cruzado con proyectos
   const allCC = [...new Set([...lm.ingresos.map(r=>r.cc), ...lm.costos.map(r=>r.cc)])].sort();
   let ccRows = '';
-  let sumIng=0, sumCost2=0;
+  let sumIng=0, sumCost2=0, sumContrato=0, sumFact=0;
   allCC.forEach(cc => {
-    const ing  = lm.ingresos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
-    const cost = lm.costos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
-    const res  = ing - cost;
+    const ing    = lm.ingresos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+    const cost   = lm.costos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+    const res    = ing - cost;
     const nombre = lm.cc[cc] || cc;
+    const proy   = proyectos.find(p=>p.cc===cc);
+    const contrato  = proy ? proy.contrato  : null;
+    const facturado = proy ? proy.facturado : null;
+    const avance    = proy ? proy.avance    : null;
+    const margen = cost > 0 ? ((res/cost)*100).toFixed(1)+'%' : '—';
+    const margenColor = res>=0 ? 'var(--accent-green)' : 'var(--accent-red)';
+    const badgeMargen = res>=0 ? 'badge-green' : 'badge-red';
     sumIng+=ing; sumCost2+=cost;
+    if(contrato)  sumContrato+=contrato;
+    if(facturado) sumFact+=facturado;
     ccRows += `<tr>
       <td><span class="badge badge-blue">CC-${cc}</span></td>
-      <td>${nombre}</td>
-      <td>${fmtCLP(ing)}</td>
-      <td style="color:var(--accent-red)">${fmtCLP(cost)}</td>
-      <td style="color:${res>=0?'var(--accent-green)':'var(--accent-red)'};font-weight:600">${fmtCLP(res)}</td>
+      <td style="font-weight:600">${nombre}</td>
+      <td>${avance!==null ? `<span class="badge ${avance>=100?'badge-green':avance>=60?'badge-blue':'badge-yellow'}">${avance}%</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${contrato  ? fmtM(contrato)  : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${facturado !== null ? fmtM(facturado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="color:var(--accent-green)">${fmtM(ing)}</td>
+      <td style="color:var(--accent-red)">${fmtM(cost)}</td>
+      <td style="color:${margenColor};font-weight:700">${fmtM(res)}</td>
+      <td><span class="badge ${badgeMargen}">${margen}</span></td>
     </tr>`;
   });
   ccRows += `<tr style="font-weight:700;border-top:2px solid var(--border)">
     <td colspan="2">TOTAL</td>
-    <td>${fmtCLP(sumIng)}</td>
-    <td style="color:var(--accent-red)">${fmtCLP(sumCost2)}</td>
-    <td style="color:${(sumIng-sumCost2)>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtCLP(sumIng-sumCost2)}</td>
+    <td>—</td>
+    <td>${fmtM(sumContrato)}</td>
+    <td>${fmtM(sumFact)}</td>
+    <td style="color:var(--accent-green)">${fmtM(sumIng)}</td>
+    <td style="color:var(--accent-red)">${fmtM(sumCost2)}</td>
+    <td style="color:${(sumIng-sumCost2)>=0?'var(--accent-green)':'var(--accent-red)'};font-weight:700">${fmtM(sumIng-sumCost2)}</td>
+    <td>—</td>
   </tr>`;
   document.getElementById('tbody-contab-cc').innerHTML = ccRows;
 }
