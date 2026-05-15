@@ -281,6 +281,9 @@
       <div class="nav-item active" onclick="navigate('dashboard', this)">
         <span class="icon">📊</span> Dashboard
       </div>
+      <div class="nav-item" onclick="navigate('resumen', this)">
+        <span class="icon">🎯</span> Resumen Ejecutivo
+      </div>
       <div class="nav-item" onclick="navigate('flujo', this)">
         <span class="icon">📈</span> Flujo Proyectado
       </div>
@@ -403,6 +406,34 @@
             <th>Inicio</th><th>Término</th><th>Meses restantes</th><th>Prom. mensual</th>
           </tr></thead>
           <tbody id="tbody-flujo"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RESUMEN EJECUTIVO -->
+    <div id="view-resumen" class="view">
+      <div id="resumen-anual-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px"></div>
+      <div class="chart-box" style="margin-bottom:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3 style="margin:0">Evolución Anual — Ingresos vs Costos vs Resultado</h3>
+        </div>
+        <canvas id="chartResumen" style="max-height:260px"></canvas>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#22c55e;margin-right:4px"></span>Ingresos</span>
+          <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ff3d6b;margin-right:4px"></span>Costos totales</span>
+          <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:22px;height:3px;background:#4d61ff;margin-right:4px;vertical-align:middle"></span>Resultado operacional</span>
+        </div>
+      </div>
+      <div class="section-header"><h3>Resultado por Proyecto — Visión Consolidada</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>CC</th><th>Proyecto</th><th>Estado</th><th>Contrato</th><th>Facturado</th><th>Avance</th>
+            <th style="border-left:1px solid var(--border)">Ing 2025</th><th>Res 2025</th>
+            <th style="border-left:1px solid var(--border)">Ing 2026</th><th>Res 2026</th>
+            <th style="border-left:1px solid var(--border)">Total Ing</th><th>Total Costo</th><th>Resultado</th><th>Margen</th>
+          </tr></thead>
+          <tbody id="tbody-resumen-cc"></tbody>
         </table>
       </div>
     </div>
@@ -739,7 +770,7 @@ function buscar(v) { searchTerm = v; renderProyectos(); }
 // NAVEGACIÓN
 // ══════════════════════════════════════════════════════
 const TITLES = {
-  dashboard:'Dashboard', proyectos:'Proyectos', facturacion:'Facturación',
+  dashboard:'Dashboard', resumen:'Resumen Ejecutivo', proyectos:'Proyectos', facturacion:'Facturación',
   flujo:'Flujo Proyectado', contabilidad:'Contabilidad Real',
   luminarias:'Luminarias', camaras:'Televigilancia', postes:'Postes Inteligentes',
   activos:'En Ejecución', completados:'Completados'
@@ -760,7 +791,7 @@ function navigate(view, sidebarEl, mobileEl) {
 }
 function renderView(v) {
   const map = {
-    dashboard: renderDashboard, proyectos: renderProyectos, facturacion: renderFacturacion,
+    dashboard: renderDashboard, resumen: renderResumen, proyectos: renderProyectos, facturacion: renderFacturacion,
     flujo: renderFlujoProyectado, contabilidad: renderContabilidad,
     luminarias: () => renderTipoTable('lum','luminaria'),
     camaras:    () => renderTipoTable('cam','camara'),
@@ -774,7 +805,7 @@ function renderView(v) {
 // ══════════════════════════════════════════════════════
 // CHARTS
 // ══════════════════════════════════════════════════════
-let chartTipo, chartFactura, chartFlujo, chartFlujo2, chartContab;
+let chartTipo, chartFactura, chartFlujo, chartFlujo2, chartContab, chartResumen;
 let contabYear = 2026;
 function setContabYear(y, btn) {
   contabYear = y;
@@ -1445,6 +1476,146 @@ function renderFlujoProyectado() {
 // ══════════════════════════════════════════════════════
 // CONTABILIDAD REAL (Softland Libro Mayor 2026)
 // ══════════════════════════════════════════════════════
+function renderResumen() {
+  // ── Totales anuales ──────────────────────────────────
+  function yrTotals(lm) {
+    const ing  = lm.ingresos.reduce((a,r)=>a+r.monto,0);
+    const cost = lm.costos.reduce((a,r)=>a+r.monto,0);
+    const adm  = lm.gastosAdm.reduce((a,r)=>a+r.monto,0);
+    return { ing, cost, adm, ro: ing - cost - adm };
+  }
+  const t24 = yrTotals(LIBRO_MAYOR_2024);
+  const t25 = yrTotals(LIBRO_MAYOR_2025);
+  const t26 = yrTotals(LIBRO_MAYOR_2026);
+
+  // ── Cards anuales ────────────────────────────────────
+  function yrCard(label, t, sub) {
+    const margen = t.ing ? ((t.ro/t.ing)*100).toFixed(1) : '—';
+    const roColor = t.ro>=0 ? 'var(--accent-green)' : 'var(--accent-red)';
+    return `<div class="chart-box" style="padding:18px 20px">
+      <div style="font-size:12px;font-weight:700;color:var(--accent-blue);letter-spacing:.5px;margin-bottom:12px">${label}</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">Ingresos facturados</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent-green);margin-bottom:10px">${fmtCLP(t.ing)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><div style="font-size:10px;color:var(--text-muted)">Costos directos</div>
+          <div style="font-weight:600;color:var(--accent-red)">${fmtCLP(t.cost)}</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted)">Gastos adm.</div>
+          <div style="font-weight:600;color:var(--accent-orange)">${fmtCLP(t.adm)}</div></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:10px;color:var(--text-muted)">Resultado operacional</div>
+        <div style="font-size:18px;font-weight:700;color:${roColor}">${fmtCLP(t.ro)}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Margen ${margen}% &nbsp;·&nbsp; ${sub}</div>
+      </div>
+    </div>`;
+  }
+  document.getElementById('resumen-anual-cards').innerHTML =
+    yrCard('2024 — Año completo', t24, '10 meses facturados') +
+    yrCard('2025 — Año completo', t25, 'Ene – Dic 2025') +
+    yrCard('2026 — Acumulado YTD', t26, 'Ene – May 2026');
+
+  // ── Gráfico comparativo ──────────────────────────────
+  if (chartResumen) chartResumen.destroy();
+  chartResumen = new Chart(document.getElementById('chartResumen').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['2024', '2025', '2026 YTD'],
+      datasets: [
+        { label:'Ingresos', data:[t24.ing, t25.ing, t26.ing],
+          backgroundColor:'rgba(34,197,94,.75)', order:2 },
+        { label:'Costos totales', data:[t24.cost+t24.adm, t25.cost+t25.adm, t26.cost+t26.adm],
+          backgroundColor:'rgba(255,61,107,.60)', order:2 },
+        { label:'Resultado Op.', data:[t24.ro, t25.ro, t26.ro], type:'line',
+          borderColor:'#4d61ff', backgroundColor:'rgba(77,97,255,.12)',
+          fill:true, tension:.3, pointRadius:6,
+          pointBackgroundColor:[t24.ro,t25.ro,t26.ro].map(v=>v>=0?'#22c55e':'#ff3d6b'), order:1 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      scales: { y:{ ticks:{ callback: v=>fmtCLP(v), color:'#7d90a8', font:{size:10} },
+                    grid:{color:'rgba(255,255,255,.05)'} },
+                x:{ ticks:{color:'#7d90a8'}, grid:{color:'rgba(255,255,255,.05)'} } },
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx=>`${ctx.dataset.label}: ${fmtCLP(ctx.parsed.y)}` } } }
+    }
+  });
+
+  // ── Tabla consolidada por CC (2025 + 2026) ───────────
+  const lms = [LIBRO_MAYOR_2025, LIBRO_MAYOR_2026];
+  const allCC = [...new Set(lms.flatMap(lm=>[
+    ...lm.ingresos.filter(r=>r.cc).map(r=>r.cc),
+    ...lm.costos.filter(r=>r.cc).map(r=>r.cc),
+  ]))].sort();
+
+  function ccSum(lm, cc, key) {
+    return lm[key].filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+  }
+
+  let rows = '';
+  let sIng25=0,sCost25=0,sIng26=0,sCost26=0,sTotIng=0,sTotCost=0;
+
+  allCC.forEach(cc => {
+    const ing25  = ccSum(LIBRO_MAYOR_2025, cc, 'ingresos');
+    const cost25 = ccSum(LIBRO_MAYOR_2025, cc, 'costos');
+    const res25  = ing25 - cost25;
+    const ing26  = ccSum(LIBRO_MAYOR_2026, cc, 'ingresos');
+    const cost26 = ccSum(LIBRO_MAYOR_2026, cc, 'costos');
+    const res26  = ing26 - cost26;
+    const totIng  = ing25 + ing26;
+    const totCost = cost25 + cost26;
+    const totRes  = totIng - totCost;
+    const margen  = totCost>0 ? ((totRes/totCost)*100).toFixed(1)+'%' : '—';
+    const resColor = totRes>=0 ? 'var(--accent-green)' : 'var(--accent-red)';
+    const badgeRes = totRes>=0 ? 'badge-green' : 'badge-red';
+
+    const nombre  = CC_MAP[cc] || `CC-${cc}`;
+    const proy    = proyectos.find(p=>p.cc===cc);
+    const contrato  = proy ? proy.contrato  : null;
+    const facturado = proy ? proy.facturado : null;
+    const avance    = proy ? proy.avance    : null;
+    const estado    = proy ? proy.estado    : null;
+
+    sIng25+=ing25; sCost25+=cost25; sIng26+=ing26; sCost26+=cost26;
+    sTotIng+=totIng; sTotCost+=totCost;
+
+    const res25color = res25>=0?'var(--accent-green)':'var(--accent-red)';
+    const res26color = res26>=0?'var(--accent-green)':'var(--accent-red)';
+
+    rows += `<tr>
+      <td><span class="badge badge-blue">CC-${cc}</span></td>
+      <td style="font-weight:600">${nombre}</td>
+      <td>${estado ? estadoBadge(estado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${contrato ? fmtM(contrato) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${facturado!==null ? fmtM(facturado) : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${avance!==null ? `<span class="badge ${avance>=100?'badge-green':avance>=60?'badge-blue':'badge-yellow'}">${avance}%</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(ing25)}</td>
+      <td style="color:${res25color};font-weight:600">${fmtM(res25)}</td>
+      <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(ing26)}</td>
+      <td style="color:${res26color};font-weight:600">${fmtM(res26)}</td>
+      <td style="border-left:1px solid var(--border);font-weight:700">${fmtM(totIng)}</td>
+      <td style="color:var(--accent-red)">${fmtM(totCost)}</td>
+      <td style="color:${resColor};font-weight:700">${fmtM(totRes)}</td>
+      <td><span class="badge ${badgeRes}">${margen}</span></td>
+    </tr>`;
+  });
+
+  const sTotRes = sTotIng - sTotCost;
+  const sMargen = sTotCost>0 ? ((sTotRes/sTotCost)*100).toFixed(1)+'%' : '—';
+  rows += `<tr style="font-weight:700;border-top:2px solid var(--border)">
+    <td colspan="2">TOTAL</td><td>—</td><td>—</td><td>—</td><td>—</td>
+    <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(sIng25)}</td>
+    <td style="color:${(sIng25-sCost25)>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtM(sIng25-sCost25)}</td>
+    <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(sIng26)}</td>
+    <td style="color:${(sIng26-sCost26)>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtM(sIng26-sCost26)}</td>
+    <td style="border-left:1px solid var(--border)">${fmtM(sTotIng)}</td>
+    <td style="color:var(--accent-red)">${fmtM(sTotCost)}</td>
+    <td style="color:${sTotRes>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtM(sTotRes)}</td>
+    <td><span class="badge ${sTotRes>=0?'badge-green':'badge-red'}">${sMargen}</span></td>
+  </tr>`;
+  document.getElementById('tbody-resumen-cc').innerHTML = rows;
+}
+
 function renderContabilidad() {
   const lmMap = { 2024: LIBRO_MAYOR_2024, 2025: LIBRO_MAYOR_2025, 2026: LIBRO_MAYOR_2026 };
   const lm = lmMap[contabYear];
