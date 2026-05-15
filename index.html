@@ -409,11 +409,19 @@
 
     <!-- CONTABILIDAD REAL -->
     <div id="view-contabilidad" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--text-muted)">Seleccionar año:</span>
+        <div class="filters" style="margin:0">
+          <button class="filter-btn" onclick="setContabYear(2024,this)">2024</button>
+          <button class="filter-btn" onclick="setContabYear(2025,this)">2025</button>
+          <button class="filter-btn active" onclick="setContabYear(2026,this)">2026</button>
+        </div>
+      </div>
       <div class="kpi-grid" id="kpi-contab"></div>
       <div class="chart-box" style="margin-bottom:22px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-          <h3 style="margin:0">Ingresos vs Costos Directos — 2026</h3>
-          <span style="font-size:10px;color:var(--text-muted);background:var(--border);padding:3px 8px;border-radius:20px">Fuente: Softland — Libro Mayor 20260512</span>
+          <h3 style="margin:0" id="contab-chart-title">Ingresos vs Costos Directos — 2026</h3>
+          <span style="font-size:10px;color:var(--text-muted);background:var(--border);padding:3px 8px;border-radius:20px">Fuente: Softland — Libro Mayor</span>
         </div>
         <canvas id="chartContab" style="max-height:280px"></canvas>
         <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
@@ -423,7 +431,7 @@
           <span style="font-size:11px;color:var(--text-muted)"><span style="display:inline-block;width:22px;height:3px;background:#4d61ff;margin-right:4px;vertical-align:middle"></span>Resultado operacional</span>
         </div>
       </div>
-      <div class="section-header"><h3>P&amp;L Mensual 2026</h3></div>
+      <div class="section-header"><h3 id="contab-pl-title">P&amp;L Mensual 2026</h3></div>
       <div class="table-wrap" style="margin-bottom:22px">
         <table>
           <thead><tr>
@@ -437,7 +445,7 @@
         <table>
           <thead><tr>
             <th>CC</th><th>Proyecto</th><th>Avance</th><th>Contrato</th><th>Facturado</th>
-            <th>Ingresos 2026</th><th>Costos 2026</th><th>Resultado 2026</th><th>Margen</th>
+            <th id="th-ing-año">Ingresos 2026</th><th id="th-cost-año">Costos 2026</th><th id="th-res-año">Resultado 2026</th><th>Margen</th>
           </tr></thead>
           <tbody id="tbody-contab-cc"></tbody>
         </table>
@@ -613,7 +621,7 @@
 <script>
 // ══════════════════════════════════════════════════════
 // DATOS REALES — Dashboard Proyectos.xlsx (Grupo CINSA)
-// Última actualización: 2026-05-15
+// Última actualización: 2026-05-12
 // ══════════════════════════════════════════════════════
 let proyectos = [
   { id:1,  anio:2023, ncontrato:'3824-37-LR23',  nombre:'Padre Hurtado',       tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:1631127731, facturado:1631127731, avance:100, avanceProg:100, unidades:4000, plazo:235, inicio:'2023-11-24', termino:'2024-07-16' },
@@ -767,6 +775,13 @@ function renderView(v) {
 // CHARTS
 // ══════════════════════════════════════════════════════
 let chartTipo, chartFactura, chartFlujo, chartFlujo2, chartContab;
+let contabYear = 2026;
+function setContabYear(y, btn) {
+  contabYear = y;
+  document.querySelectorAll('#view-contabilidad .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderContabilidad();
+}
 
 function renderDashboard() {
   const ps = proyectos;
@@ -1067,60 +1082,172 @@ const FLUJO_CAJA = {
 };
 
 // ══════════════════════════════════════════════════════
-// DATOS CONTABILIDAD REAL — Softland Libro Mayor 2026
-// Fuente: 20260512 Libro Mayor.xlsx (01/01/2026–12/05/2026)
+// DATOS CONTABILIDAD REAL — Softland Libro Mayor 2024/2025/2026
+// Fuente: exportaciones filtradas ctas resultado (31-43) desde Softland
 // ══════════════════════════════════════════════════════
-const LIBRO_MAYOR_2026 = {
-  archivo: '20260512 Libro Mayor.xlsx',
-  // Centros de costo identificados (013 y 019 confirmados por facturas)
-  cc: {
-    '004': 'Oficina Central',
-    '011': 'Antofagasta',
-    '013': 'Providencia',
-    '019': 'Arica',
-    '002': 'Hijuelas',
-    '003': 'Quilicura II',
-    '016': 'Providencia II',
-    '020': 'Calama',
-  },
-  // Ingresos netos facturados (HABER − DEBE en cta 31-02-002)
+const CC_MAP = {
+  '001':'Padre Hurtado', '002':'Hijuelas', '003':'Quilicura II',
+  '004':'Oficina Central', '005':'Limache', '006':'Pedro Aguirre Cerda',
+  '007':'Quilicura', '008':'Santiago', '009':'SAR La Reina', '010':'CC-010',
+  '011':'Antofagasta', '012':'CC-012', '013':'Providencia', '014':'Hualpén',
+  '015':'Nevados de Chillán', '016':'Providencia II', '018':'UMCE',
+  '019':'Arica', '020':'Calama',
+};
+
+const LIBRO_MAYOR_2024 = {
   ingresos: [
-    {mes:'2026-02', cc:'004', monto:54672200},
-    {mes:'2026-03', cc:'013', monto:176012340},
-    {mes:'2026-04', cc:'019', monto:53080952},
+    {mes:'2024-03',cc:'',monto:121600000},
+    {mes:'2024-04',cc:'',monto:203574793},
+    {mes:'2024-05',cc:'',monto:478823907},
+    {mes:'2024-06',cc:'',monto:561022637},
+    {mes:'2024-07',cc:'',monto:94651869},
+    {mes:'2024-08',cc:'',monto:130949844},
+    {mes:'2024-09',cc:'',monto:120657089},
+    {mes:'2024-10',cc:'',monto:494672939},
+    {mes:'2024-11',cc:'',monto:370461711},
+    {mes:'2024-12',cc:'',monto:141140375},
   ],
-  // Costos directos netos (DEBE − HABER en cuentas 41-xx)
   costos: [
-    {mes:'2026-01', cc:'002', monto:1219280},
-    {mes:'2026-01', cc:'004', monto:54672200},
-    {mes:'2026-01', cc:'011', monto:160619505},
-    {mes:'2026-01', cc:'013', monto:105815838},
-    {mes:'2026-01', cc:'019', monto:183018574},
-    {mes:'2026-02', cc:'002', monto:700000},
-    {mes:'2026-02', cc:'003', monto:220000},
-    {mes:'2026-02', cc:'011', monto:14156730},
-    {mes:'2026-02', cc:'013', monto:2781299},
-    {mes:'2026-02', cc:'019', monto:11472144},
-    {mes:'2026-03', cc:'002', monto:40590},
-    {mes:'2026-03', cc:'011', monto:7645084},
-    {mes:'2026-03', cc:'013', monto:105655},
-    {mes:'2026-03', cc:'016', monto:126968},
-    {mes:'2026-03', cc:'019', monto:19276232},
-    {mes:'2026-03', cc:'020', monto:620627},
-    {mes:'2026-04', cc:'004', monto:6600},
-    {mes:'2026-04', cc:'011', monto:8630135},
-    {mes:'2026-04', cc:'013', monto:23350},
-    {mes:'2026-04', cc:'019', monto:11400049},
-    {mes:'2026-04', cc:'020', monto:-600000},
-    {mes:'2026-05', cc:'019', monto:1904983},
+    {mes:'2024-01',cc:'',monto:17251071},{mes:'2024-02',cc:'',monto:21065465},
+    {mes:'2024-03',cc:'',monto:71670408},{mes:'2024-04',cc:'',monto:39866519},
+    {mes:'2024-05',cc:'',monto:82599345},{mes:'2024-06',cc:'',monto:113469778},
+    {mes:'2024-07',cc:'',monto:66730685},{mes:'2024-08',cc:'',monto:55199781},
+    {mes:'2024-09',cc:'',monto:121261281},
+    {mes:'2024-10',cc:'',monto:49295878},{mes:'2024-10',cc:'001',monto:27258968},
+    {mes:'2024-10',cc:'003',monto:151657},{mes:'2024-10',cc:'004',monto:2052000},
+    {mes:'2024-10',cc:'005',monto:5832058},{mes:'2024-10',cc:'006',monto:17100692},
+    {mes:'2024-10',cc:'007',monto:1773802},{mes:'2024-10',cc:'008',monto:21147683},
+    {mes:'2024-10',cc:'009',monto:17585698},{mes:'2024-10',cc:'010',monto:3183438},
+    {mes:'2024-10',cc:'011',monto:221924},
+    {mes:'2024-11',cc:'',monto:55330898},{mes:'2024-11',cc:'001',monto:4832072},
+    {mes:'2024-11',cc:'002',monto:28175400},{mes:'2024-11',cc:'003',monto:25361087},
+    {mes:'2024-11',cc:'004',monto:212651},{mes:'2024-11',cc:'006',monto:3547808},
+    {mes:'2024-11',cc:'007',monto:-637961},{mes:'2024-11',cc:'008',monto:28050006},
+    {mes:'2024-11',cc:'009',monto:2017866},{mes:'2024-11',cc:'011',monto:40915777},
+    {mes:'2024-11',cc:'012',monto:19270100},{mes:'2024-11',cc:'013',monto:19200},
+    {mes:'2024-12',cc:'',monto:873596980},{mes:'2024-12',cc:'001',monto:433739},
+    {mes:'2024-12',cc:'002',monto:4755570},{mes:'2024-12',cc:'003',monto:74589610},
+    {mes:'2024-12',cc:'004',monto:2250785},{mes:'2024-12',cc:'005',monto:347826},
+    {mes:'2024-12',cc:'008',monto:813550},{mes:'2024-12',cc:'009',monto:82200},
   ],
-  // Gastos administrativos (cuentas 42-xx, sin CC de proyecto)
   gastosAdm: [
-    {mes:'2026-01', monto:20428184},
-    {mes:'2026-02', monto:7336629},
-    {mes:'2026-03', monto:6180767},
-    {mes:'2026-04', monto:27101064},
-    {mes:'2026-05', monto:2157165},
+    {mes:'2024-01',monto:2801176},{mes:'2024-02',monto:7852024},
+    {mes:'2024-03',monto:4302465},{mes:'2024-04',monto:11580020},
+    {mes:'2024-05',monto:11659597},{mes:'2024-06',monto:11623800},
+    {mes:'2024-07',monto:17445745},{mes:'2024-08',monto:18289830},
+    {mes:'2024-09',monto:11949378},{mes:'2024-10',monto:9130911},
+    {mes:'2024-11',monto:22883829},{mes:'2024-12',monto:327515756},
+  ],
+};
+
+const LIBRO_MAYOR_2025 = {
+  ingresos: [
+    {mes:'2025-01',cc:'',monto:49029836},{mes:'2025-01',cc:'001',monto:10250000},
+    {mes:'2025-01',cc:'008',monto:56124038},
+    {mes:'2025-02',cc:'005',monto:4437110},{mes:'2025-02',cc:'008',monto:74175590},
+    {mes:'2025-03',cc:'003',monto:129999990},{mes:'2025-03',cc:'007',monto:-55990000},
+    {mes:'2025-03',cc:'008',monto:45121640},
+    {mes:'2025-05',cc:'015',monto:34649370},{mes:'2025-05',cc:'018',monto:14857143},
+    {mes:'2025-06',cc:'006',monto:58309153},{mes:'2025-06',cc:'009',monto:3325192},
+    {mes:'2025-06',cc:'014',monto:840336134},
+    {mes:'2025-07',cc:'013',monto:20303099},{mes:'2025-07',cc:'014',monto:376419711},
+    {mes:'2025-07',cc:'018',monto:42317241},
+    {mes:'2025-08',cc:'002',monto:177722286},{mes:'2025-08',cc:'008',monto:62012108},
+    {mes:'2025-08',cc:'014',monto:707367065},
+    {mes:'2025-09',cc:'018',monto:7415055},
+    {mes:'2025-10',cc:'014',monto:525177205},{mes:'2025-10',cc:'018',monto:-7415055},
+    {mes:'2025-11',cc:'002',monto:134345572},{mes:'2025-11',cc:'006',monto:5060000},
+    {mes:'2025-11',cc:'013',monto:125141970},{mes:'2025-11',cc:'016',monto:34025883},
+    {mes:'2025-11',cc:'018',monto:24526385},{mes:'2025-11',cc:'019',monto:140045342},
+    {mes:'2025-12',cc:'002',monto:45640556},{mes:'2025-12',cc:'003',monto:3104160},
+    {mes:'2025-12',cc:'004',monto:326178938},{mes:'2025-12',cc:'011',monto:684125770},
+    {mes:'2025-12',cc:'013',monto:59558556},{mes:'2025-12',cc:'014',monto:148463486},
+    {mes:'2025-12',cc:'019',monto:82324281},
+  ],
+  costos: [
+    {mes:'2025-01',cc:'',monto:583442493},{mes:'2025-01',cc:'001',monto:8080272},
+    {mes:'2025-01',cc:'003',monto:10786218},{mes:'2025-01',cc:'004',monto:17229160},
+    {mes:'2025-01',cc:'005',monto:234867},{mes:'2025-01',cc:'006',monto:298576},
+    {mes:'2025-01',cc:'007',monto:300000},{mes:'2025-01',cc:'008',monto:7072116},
+    {mes:'2025-01',cc:'009',monto:820000},{mes:'2025-01',cc:'013',monto:89316882},
+    {mes:'2025-01',cc:'014',monto:589439},{mes:'2025-01',cc:'016',monto:2650160},
+    {mes:'2025-02',cc:'',monto:42150510},{mes:'2025-02',cc:'003',monto:169839},
+    {mes:'2025-02',cc:'005',monto:318754},{mes:'2025-02',cc:'008',monto:452590},
+    {mes:'2025-02',cc:'013',monto:34800},{mes:'2025-02',cc:'016',monto:582000},
+    {mes:'2025-03',cc:'',monto:45288833},{mes:'2025-03',cc:'008',monto:227332},
+    {mes:'2025-03',cc:'013',monto:46974495},{mes:'2025-03',cc:'014',monto:1103069},
+    {mes:'2025-03',cc:'016',monto:1120000},
+    {mes:'2025-04',cc:'',monto:44256286},{mes:'2025-04',cc:'002',monto:142280},
+    {mes:'2025-04',cc:'008',monto:46995},{mes:'2025-04',cc:'011',monto:184348},
+    {mes:'2025-04',cc:'013',monto:3453699},{mes:'2025-04',cc:'014',monto:1354908},
+    {mes:'2025-04',cc:'016',monto:210100},
+    {mes:'2025-05',cc:'',monto:45678986},{mes:'2025-05',cc:'011',monto:1326548},
+    {mes:'2025-05',cc:'013',monto:22520},{mes:'2025-05',cc:'014',monto:572841},
+    {mes:'2025-06',cc:'',monto:49385715},{mes:'2025-06',cc:'002',monto:396154},
+    {mes:'2025-06',cc:'008',monto:2900},{mes:'2025-06',cc:'011',monto:173942247},
+    {mes:'2025-06',cc:'012',monto:1},{mes:'2025-06',cc:'013',monto:8200},
+    {mes:'2025-06',cc:'014',monto:3398708},{mes:'2025-06',cc:'016',monto:495540},
+    {mes:'2025-06',cc:'018',monto:5151000},
+    {mes:'2025-07',cc:'',monto:53025018},{mes:'2025-07',cc:'002',monto:11980},
+    {mes:'2025-07',cc:'004',monto:31650},{mes:'2025-07',cc:'011',monto:1153830},
+    {mes:'2025-07',cc:'013',monto:612388},{mes:'2025-07',cc:'014',monto:709566},
+    {mes:'2025-07',cc:'019',monto:213459},
+    {mes:'2025-08',cc:'',monto:56544803},{mes:'2025-08',cc:'002',monto:128040},
+    {mes:'2025-08',cc:'003',monto:174554},{mes:'2025-08',cc:'004',monto:93695},
+    {mes:'2025-08',cc:'009',monto:16200},{mes:'2025-08',cc:'011',monto:14602182},
+    {mes:'2025-08',cc:'013',monto:597227},{mes:'2025-08',cc:'014',monto:1580096},
+    {mes:'2025-08',cc:'019',monto:34787544},
+    {mes:'2025-09',cc:'',monto:58358169},{mes:'2025-09',cc:'002',monto:10934},
+    {mes:'2025-09',cc:'004',monto:75121},{mes:'2025-09',cc:'011',monto:2428482},
+    {mes:'2025-09',cc:'013',monto:87984},{mes:'2025-09',cc:'014',monto:500000},
+    {mes:'2025-09',cc:'019',monto:1765044},
+    {mes:'2025-10',cc:'',monto:57273151},{mes:'2025-10',cc:'002',monto:532502},
+    {mes:'2025-10',cc:'004',monto:145862},{mes:'2025-10',cc:'011',monto:884948},
+    {mes:'2025-10',cc:'013',monto:1636345},{mes:'2025-10',cc:'019',monto:12555542},
+    {mes:'2025-11',cc:'',monto:57190217},{mes:'2025-11',cc:'002',monto:35990},
+    {mes:'2025-11',cc:'004',monto:363495},{mes:'2025-11',cc:'011',monto:3481896},
+    {mes:'2025-11',cc:'013',monto:47457},{mes:'2025-11',cc:'014',monto:229323},
+    {mes:'2025-11',cc:'019',monto:3289036},
+    {mes:'2025-12',cc:'',monto:93361340},{mes:'2025-12',cc:'001',monto:10500},
+    {mes:'2025-12',cc:'002',monto:48640},{mes:'2025-12',cc:'004',monto:79886},
+    {mes:'2025-12',cc:'011',monto:1577965},{mes:'2025-12',cc:'013',monto:301010},
+    {mes:'2025-12',cc:'014',monto:15600},{mes:'2025-12',cc:'019',monto:2051738},
+  ],
+  gastosAdm: [
+    {mes:'2025-01',monto:32063533},{mes:'2025-02',monto:1233324},
+    {mes:'2025-03',monto:2450061},{mes:'2025-04',monto:760131},
+    {mes:'2025-05',monto:6729675},{mes:'2025-06',monto:7920829},
+    {mes:'2025-07',monto:42661424},{mes:'2025-08',monto:15757737},
+    {mes:'2025-09',monto:3977977},{mes:'2025-10',monto:10702215},
+    {mes:'2025-11',monto:9018224},{mes:'2025-12',monto:27914304},
+  ],
+};
+
+const LIBRO_MAYOR_2026 = {
+  ingresos: [
+    {mes:'2026-02',cc:'004',monto:54672200},
+    {mes:'2026-03',cc:'013',monto:176012340},
+    {mes:'2026-04',cc:'019',monto:53080952},
+  ],
+  costos: [
+    {mes:'2026-01',cc:'002',monto:2709680},{mes:'2026-01',cc:'004',monto:54672200},
+    {mes:'2026-01',cc:'011',monto:328705243},{mes:'2026-01',cc:'013',monto:157798504},
+    {mes:'2026-01',cc:'019',monto:304456831},
+    {mes:'2026-02',cc:'002',monto:700000},{mes:'2026-02',cc:'003',monto:220000},
+    {mes:'2026-02',cc:'011',monto:14156730},{mes:'2026-02',cc:'013',monto:2781299},
+    {mes:'2026-02',cc:'019',monto:11472144},
+    {mes:'2026-03',cc:'002',monto:40590},{mes:'2026-03',cc:'011',monto:7645084},
+    {mes:'2026-03',cc:'013',monto:105655},{mes:'2026-03',cc:'016',monto:126968},
+    {mes:'2026-03',cc:'019',monto:19276232},{mes:'2026-03',cc:'020',monto:620627},
+    {mes:'2026-04',cc:'004',monto:6600},{mes:'2026-04',cc:'011',monto:8630135},
+    {mes:'2026-04',cc:'013',monto:23350},{mes:'2026-04',cc:'019',monto:12178810},
+    {mes:'2026-04',cc:'020',monto:-600000},
+    {mes:'2026-05',cc:'011',monto:65673},{mes:'2026-05',cc:'019',monto:1904983},
+  ],
+  gastosAdm: [
+    {mes:'2026-01',monto:20428834},{mes:'2026-02',monto:7336629},
+    {mes:'2026-03',monto:6180767},{mes:'2026-04',monto:27101064},
+    {mes:'2026-05',monto:3191478},
   ],
 };
 
@@ -1319,16 +1446,38 @@ function renderFlujoProyectado() {
 // CONTABILIDAD REAL (Softland Libro Mayor 2026)
 // ══════════════════════════════════════════════════════
 function renderContabilidad() {
-  const lm = LIBRO_MAYOR_2026;
-  const meses = ['2026-01','2026-02','2026-03','2026-04','2026-05'];
-  const labels = ['Ene 26','Feb 26','Mar 26','Abr 26','May 26'];
+  const lmMap = { 2024: LIBRO_MAYOR_2024, 2025: LIBRO_MAYOR_2025, 2026: LIBRO_MAYOR_2026 };
+  const lm = lmMap[contabYear];
+  const yr = contabYear;
+
+  // Build sorted month list from all data sources
+  const mesSet = new Set([
+    ...lm.ingresos.map(r=>r.mes),
+    ...lm.costos.map(r=>r.mes),
+    ...lm.gastosAdm.map(r=>r.mes),
+  ]);
+  const meses = [...mesSet].sort();
+  const MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const labels = meses.map(m => {
+    const [y, mo] = m.split('-');
+    return `${MESES_ES[parseInt(mo)-1]} ${y.slice(2)}`;
+  });
+
+  // Update dynamic text labels
+  const yStr = String(yr);
+  const el = id => document.getElementById(id);
+  if (el('contab-chart-title')) el('contab-chart-title').textContent = `Ingresos vs Costos Directos — ${yr}`;
+  if (el('contab-pl-title'))    el('contab-pl-title').textContent    = `P&L Mensual ${yr}`;
+  if (el('th-ing-año'))  el('th-ing-año').textContent  = `Ingresos ${yr}`;
+  if (el('th-cost-año')) el('th-cost-año').textContent = `Costos ${yr}`;
+  if (el('th-res-año'))  el('th-res-año').textContent  = `Resultado ${yr}`;
 
   // Aggregate by month
-  const ingByMes  = {}, costByMes = {}, admByMes = {};
+  const ingByMes = {}, costByMes = {}, admByMes = {};
   meses.forEach(m => { ingByMes[m]=0; costByMes[m]=0; admByMes[m]=0; });
   lm.ingresos.forEach(r => { if(ingByMes[r.mes]!==undefined) ingByMes[r.mes]+=r.monto; });
-  lm.costos.forEach(r => { if(costByMes[r.mes]!==undefined) costByMes[r.mes]+=r.monto; });
-  lm.gastosAdm.forEach(r => { if(admByMes[r.mes]!==undefined) admByMes[r.mes]+=r.monto; });
+  lm.costos.forEach(r =>   { if(costByMes[r.mes]!==undefined) costByMes[r.mes]+=r.monto; });
+  lm.gastosAdm.forEach(r =>{ if(admByMes[r.mes]!==undefined) admByMes[r.mes]+=r.monto; });
 
   const ingArr  = meses.map(m => ingByMes[m]);
   const costArr = meses.map(m => costByMes[m]);
@@ -1341,17 +1490,18 @@ function renderContabilidad() {
   const totalRO   = roArr.reduce((a,b)=>a+b,0);
 
   // KPIs
+  const periodoLabel = yr === 2026 ? 'Ene – May 2026' : `Ene – Dic ${yr}`;
   document.getElementById('kpi-contab').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">Ingresos Facturados 2026</div>
+    <div class="kpi-card"><div class="kpi-label">Ingresos Facturados ${yr}</div>
       <div class="kpi-value">${fmtCLP(totalIng)}</div>
-      <div class="kpi-sub">Ene – May 2026</div></div>
-    <div class="kpi-card"><div class="kpi-label">Costos Directos 2026</div>
+      <div class="kpi-sub">${periodoLabel}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Costos Directos ${yr}</div>
       <div class="kpi-value" style="color:var(--accent-red)">${fmtCLP(totalCost)}</div>
       <div class="kpi-sub">Cuentas 41-xx</div></div>
-    <div class="kpi-card"><div class="kpi-label">Gastos Administrativos 2026</div>
+    <div class="kpi-card"><div class="kpi-label">Gastos Administrativos ${yr}</div>
       <div class="kpi-value" style="color:var(--accent-orange)">${fmtCLP(totalAdm)}</div>
       <div class="kpi-sub">Cuentas 42-xx</div></div>
-    <div class="kpi-card"><div class="kpi-label">Resultado Operacional 2026</div>
+    <div class="kpi-card"><div class="kpi-label">Resultado Operacional ${yr}</div>
       <div class="kpi-value" style="color:${totalRO>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtCLP(totalRO)}</div>
       <div class="kpi-sub">Margen ${totalIng?((totalRO/totalIng)*100).toFixed(1):'—'}%</div></div>`;
 
@@ -1362,7 +1512,7 @@ function renderContabilidad() {
     data: {
       labels,
       datasets: [
-        { label:'Ingresos', data: ingArr,  backgroundColor:'rgba(34,197,94,.75)',  order:2 },
+        { label:'Ingresos', data: ingArr, backgroundColor:'rgba(34,197,94,.75)', order:2 },
         { label:'Costos directos', data: costArr, backgroundColor:'rgba(255,61,107,.65)', order:2 },
         { label:'Gastos adm.', data: admArr, backgroundColor:'rgba(249,115,22,.65)', order:2 },
         { label:'Resultado Op.', data: roArr, type:'line', borderColor:'#4d61ff',
@@ -1395,27 +1545,29 @@ function renderContabilidad() {
       <td><span class="badge ${ro>=0?'badge-green':'badge-red'}">${margen}</span></td>
     </tr>`;
   });
-  const roTotal = totalRO;
-  const margenTotal = totalIng ? ((roTotal/totalIng)*100).toFixed(1)+'%' : '—';
+  const margenTotal = totalIng ? ((totalRO/totalIng)*100).toFixed(1)+'%' : '—';
   plRows += `<tr style="font-weight:700;border-top:2px solid var(--border)">
     <td>TOTAL</td>
     <td>${fmtCLP(totalIng)}</td>
     <td style="color:var(--accent-red)">${fmtCLP(totalCost)}</td>
     <td style="color:var(--accent-orange)">${fmtCLP(totalAdm)}</td>
-    <td style="color:${roTotal>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtCLP(roTotal)}</td>
-    <td><span class="badge ${roTotal>=0?'badge-green':'badge-red'}">${margenTotal}</span></td>
+    <td style="color:${totalRO>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtCLP(totalRO)}</td>
+    <td><span class="badge ${totalRO>=0?'badge-green':'badge-red'}">${margenTotal}</span></td>
   </tr>`;
   document.getElementById('tbody-contab-pl').innerHTML = plRows;
 
-  // CC table — cruzado con proyectos
-  const allCC = [...new Set([...lm.ingresos.map(r=>r.cc), ...lm.costos.map(r=>r.cc)])].sort();
+  // CC table — cruzado con proyectos, skip cc='' (overhead sin proyecto)
+  const allCC = [...new Set([
+    ...lm.ingresos.filter(r=>r.cc).map(r=>r.cc),
+    ...lm.costos.filter(r=>r.cc).map(r=>r.cc),
+  ])].sort();
   let ccRows = '';
   let sumIng=0, sumCost2=0, sumContrato=0, sumFact=0;
   allCC.forEach(cc => {
-    const ing    = lm.ingresos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
-    const cost   = lm.costos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
-    const res    = ing - cost;
-    const nombre = lm.cc[cc] || cc;
+    const ing  = lm.ingresos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+    const cost = lm.costos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+    const res  = ing - cost;
+    const nombre = CC_MAP[cc] || `CC-${cc}`;
     const proy   = proyectos.find(p=>p.cc===cc);
     const contrato  = proy ? proy.contrato  : null;
     const facturado = proy ? proy.facturado : null;
