@@ -429,6 +429,7 @@
         <table>
           <thead><tr>
             <th>CC</th><th>Proyecto</th><th>Estado</th><th>Contrato</th><th>Facturado</th><th>Avance</th>
+            <th style="border-left:1px solid var(--border)">Fact 2024</th>
             <th style="border-left:1px solid var(--border)">Ing 2025</th><th>Res 2025</th>
             <th style="border-left:1px solid var(--border)">Ing 2026</th><th>Res 2026</th>
             <th style="border-left:1px solid var(--border)">Total Ing</th><th>Total Costo</th><th>Resultado</th><th>Margen</th>
@@ -657,16 +658,16 @@
 let proyectos = [
   { id:1,  anio:2023, ncontrato:'3824-37-LR23',  nombre:'Padre Hurtado',       tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:1631127731, facturado:1631127731, avance:100, avanceProg:100, unidades:4000, plazo:235, inicio:'2023-11-24', termino:'2024-07-16' },
   { id:2,  anio:2023, ncontrato:'3211-14-LQ23',  nombre:'Collipulli',          tipo:'luminaria', estado:'completado', ubicacion:'Collipulli',         contrato:257559069,  facturado:257559069,  avance:100, avanceProg:100, unidades:236,  plazo:345, inicio:'2024-01-15', termino:'2024-12-25' },
-  { id:3,  cc:'008', anio:2024, ncontrato:'2582-74-LR23',  nombre:'Santiago',            tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:250682919,  facturado:250682920,  avance:100, avanceProg:100, unidades:123,  plazo:185, inicio:'2024-09-02', termino:'2025-03-06' },
-  { id:4,  cc:'001', anio:2024, ncontrato:'3824-11-LQ24',  nombre:'Padre Hurtado II',    tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:37274400,   facturado:37274400,   avance:100, avanceProg:100, unidades:20,   plazo:60,  inicio:'2024-09-12', termino:'2024-11-11' },
+  { id:3,  cc:'008', anio:2024, ncontrato:'2582-74-LR23',  nombre:'Santiago',            tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:250682919,  facturado:250682920,  avance:100, avanceProg:100, unidades:123,  plazo:185, inicio:'2024-09-02', termino:'2025-03-06', fact2024:13249544 },
+  { id:4,  cc:'001', anio:2024, ncontrato:'3824-11-LQ24',  nombre:'Padre Hurtado II',    tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:37274400,   facturado:37274400,   avance:100, avanceProg:100, unidades:20,   plazo:60,  inicio:'2024-09-12', termino:'2024-11-11', fact2024:27024400 },
   { id:5,  cc:'002', anio:2024, ncontrato:'3775-16-LR24',  nombre:'Hijuelas',            tipo:'camara',    estado:'completado', ubicacion:'Hijuelas',            contrato:357708414,  facturado:357708414,  avance:100, avanceProg:100, unidades:17,   plazo:158, inicio:'2025-03-24', termino:'2025-08-29' },
-  { id:6,  cc:'007', anio:2024, ncontrato:'2483-136-LP24', nombre:'Quilicura',           tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:59094160,   facturado:59094160,   avance:100, avanceProg:100, unidades:4,    plazo:72,  inicio:'2024-06-27', termino:'2024-09-07' },
-  { id:7,  cc:'010', anio:2024, ncontrato:'2775-36-LE24',  nombre:'Rengo',               tipo:'poste',     estado:'completado', ubicacion:'Rengo',               contrato:39495016,   facturado:39495016,   avance:100, avanceProg:100, unidades:5,    plazo:91,  inicio:'2024-08-01', termino:'2024-10-31' },
+  { id:6,  cc:'007', anio:2024, ncontrato:'2483-136-LP24', nombre:'Quilicura',           tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:59094160,   facturado:59094160,   avance:100, avanceProg:100, unidades:4,    plazo:72,  inicio:'2024-06-27', termino:'2024-09-07', fact2024:111980000 },
+  { id:7,  cc:'010', anio:2024, ncontrato:'2775-36-LE24',  nombre:'Rengo',               tipo:'poste',     estado:'completado', ubicacion:'Rengo',               contrato:39495016,   facturado:39495016,   avance:100, avanceProg:100, unidades:5,    plazo:91,  inicio:'2024-08-01', termino:'2024-10-31', fact2024:39495016 },
   { id:8,  cc:'003', anio:2024, ncontrato:'2483-309-LQ24', nombre:'Quilicura II',        tipo:'poste',     estado:'completado', ubicacion:'Quilicura',           contrato:129999990,  facturado:129999990,  avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-10-11', termino:'2025-01-17' },
-  { id:9,  cc:'012', anio:2024, ncontrato:'5482-4-LR24',   nombre:'Ñuñoa',               tipo:'luminaria', estado:'completado', ubicacion:'Ñuñoa',               contrato:706649958,  facturado:706649958,  avance:100, avanceProg:100, unidades:1768, plazo:198, inicio:'2024-05-08', termino:'2024-11-22' },
-  { id:10, cc:'005', anio:2024, ncontrato:'4290-29-LE24',  nombre:'Limache',             tipo:'camara',    estado:'completado', ubicacion:'Limache',             contrato:50420164,   facturado:50420164,   avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-08-13', termino:'2024-11-19' },
-  { id:11, cc:'006', anio:2024, ncontrato:'2392-9-LQ24',   nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579,  facturado:166926578,  avance:100, avanceProg:100, unidades:274,  plazo:90,  inicio:'2024-07-18', termino:'2024-10-16' },
-  { id:12, cc:'009', anio:2024, ncontrato:'Privado',        nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',            contrato:89202933,   facturado:89202933,   avance:100, avanceProg:100, unidades:16,   plazo:145, inicio:'2024-07-04', termino:'2024-11-26' },
+  { id:9,  cc:'012', anio:2024, ncontrato:'5482-4-LR24',   nombre:'Ñuñoa',               tipo:'luminaria', estado:'completado', ubicacion:'Ñuñoa',               contrato:706649958,  facturado:706649958,  avance:100, avanceProg:100, unidades:1768, plazo:198, inicio:'2024-05-08', termino:'2024-11-22', fact2024:706649958 },
+  { id:10, cc:'005', anio:2024, ncontrato:'4290-29-LE24',  nombre:'Limache',             tipo:'camara',    estado:'completado', ubicacion:'Limache',             contrato:50420164,   facturado:50420164,   avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-08-13', termino:'2024-11-19', fact2024:46243054 },
+  { id:11, cc:'006', anio:2024, ncontrato:'2392-9-LQ24',   nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579,  facturado:166926578,  avance:100, avanceProg:100, unidades:274,  plazo:90,  inicio:'2024-07-18', termino:'2024-10-16', fact2024:103557425 },
+  { id:12, cc:'009', anio:2024, ncontrato:'Privado',        nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',            contrato:89202933,   facturado:89202933,   avance:100, avanceProg:100, unidades:16,   plazo:145, inicio:'2024-07-04', termino:'2024-11-26', fact2024:85877741 },
   { id:13, cc:'011', anio:2025, ncontrato:'2430-32-LR24',  nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',         contrato:2360725400, facturado:684511200,  avance:97,  avanceProg:100, unidades:100,  plazo:287, inicio:'2025-07-21', termino:'2026-05-04' },
   { id:14, cc:'013', anio:2024, ncontrato:'2490-70-LR24',  nombre:'Providencia',         tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:479800000,  facturado:321457409,  avance:100, avanceProg:100, unidades:34,   plazo:310, inicio:'2025-03-17', termino:'2026-01-21' },
   { id:15, cc:'014', anio:2024, ncontrato:'4160-23-LR24',  nombre:'Hualpén',             tipo:'luminaria', estado:'completado', ubicacion:'Hualpén',             contrato:2597763601, facturado:2597763601, avance:100, avanceProg:100, unidades:7560, plazo:131, inicio:'2025-04-01', termino:'2025-08-10' },
@@ -1553,7 +1554,7 @@ function renderResumen() {
   }
 
   let rows = '';
-  let sIng25=0,sCost25=0,sIng26=0,sCost26=0,sTotIng=0,sTotCost=0;
+  let sFact24=0,sIng25=0,sCost25=0,sIng26=0,sCost26=0,sTotIng=0,sTotCost=0;
 
   allCC.forEach(cc => {
     const ing25  = ccSum(LIBRO_MAYOR_2025, cc, 'ingresos');
@@ -1562,7 +1563,8 @@ function renderResumen() {
     const ing26  = ccSum(LIBRO_MAYOR_2026, cc, 'ingresos');
     const cost26 = ccSum(LIBRO_MAYOR_2026, cc, 'costos');
     const res26  = ing26 - cost26;
-    const totIng  = ing25 + ing26;
+    const fact2024 = (proyectos.find(p=>p.cc===cc))?.fact2024 ?? 0;
+    const totIng  = fact2024 + ing25 + ing26;
     const totCost = cost25 + cost26;
     const totRes  = totIng - totCost;
     const margen  = totCost>0 ? ((totRes/totCost)*100).toFixed(1)+'%' : '—';
@@ -1576,7 +1578,7 @@ function renderResumen() {
     const avance    = proy ? proy.avance    : null;
     const estado    = proy ? proy.estado    : null;
 
-    sIng25+=ing25; sCost25+=cost25; sIng26+=ing26; sCost26+=cost26;
+    sFact24+=fact2024; sIng25+=ing25; sCost25+=cost25; sIng26+=ing26; sCost26+=cost26;
     sTotIng+=totIng; sTotCost+=totCost;
 
     const res25color = res25>=0?'var(--accent-green)':'var(--accent-red)';
@@ -1589,6 +1591,7 @@ function renderResumen() {
       <td>${contrato ? fmtM(contrato) : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td>${facturado!==null ? fmtM(facturado) : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td>${avance!==null ? `<span class="badge ${avance>=100?'badge-green':avance>=60?'badge-blue':'badge-yellow'}">${avance}%</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fact2024 ? fmtM(fact2024) : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(ing25)}</td>
       <td style="color:${res25color};font-weight:600">${fmtM(res25)}</td>
       <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(ing26)}</td>
@@ -1604,6 +1607,7 @@ function renderResumen() {
   const sMargen = sTotCost>0 ? ((sTotRes/sTotCost)*100).toFixed(1)+'%' : '—';
   rows += `<tr style="font-weight:700;border-top:2px solid var(--border)">
     <td colspan="2">TOTAL</td><td>—</td><td>—</td><td>—</td><td>—</td>
+    <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(sFact24)}</td>
     <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(sIng25)}</td>
     <td style="color:${(sIng25-sCost25)>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtM(sIng25-sCost25)}</td>
     <td style="border-left:1px solid var(--border);color:var(--accent-green)">${fmtM(sIng26)}</td>
