@@ -652,7 +652,7 @@
 <script>
 // ══════════════════════════════════════════════════════
 // DATOS REALES — Dashboard Proyectos.xlsx (Grupo CINSA)
-// Última actualización: 2026-05-12
+// Última actualización: 2026-05-18
 // ══════════════════════════════════════════════════════
 let proyectos = [
   { id:1,  anio:2023, ncontrato:'3824-37-LR23',  nombre:'Padre Hurtado',       tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado',      contrato:1631127731, facturado:1631127731, avance:100, avanceProg:100, unidades:4000, plazo:235, inicio:'2023-11-24', termino:'2024-07-16' },
@@ -667,16 +667,16 @@ let proyectos = [
   { id:10, cc:'005', anio:2024, ncontrato:'4290-29-LE24',  nombre:'Limache',             tipo:'camara',    estado:'completado', ubicacion:'Limache',             contrato:50420164,   facturado:50420164,   avance:100, avanceProg:100, unidades:11,   plazo:98,  inicio:'2024-08-13', termino:'2024-11-19' },
   { id:11, cc:'006', anio:2024, ncontrato:'2392-9-LQ24',   nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579,  facturado:166926578,  avance:100, avanceProg:100, unidades:274,  plazo:90,  inicio:'2024-07-18', termino:'2024-10-16' },
   { id:12, cc:'009', anio:2024, ncontrato:'Privado',        nombre:'SAR La Reina',        tipo:'camara',    estado:'completado', ubicacion:'La Reina',            contrato:89202933,   facturado:89202933,   avance:100, avanceProg:100, unidades:16,   plazo:145, inicio:'2024-07-04', termino:'2024-11-26' },
-  { id:13, cc:'011', anio:2025, ncontrato:'2430-32-LR24',  nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',         contrato:2360725400, facturado:684511200,  avance:95,  avanceProg:100, unidades:100,  plazo:287, inicio:'2025-07-21', termino:'2026-05-04' },
+  { id:13, cc:'011', anio:2025, ncontrato:'2430-32-LR24',  nombre:'Antofagasta',         tipo:'camara',    estado:'activo',     ubicacion:'Antofagasta',         contrato:2360725400, facturado:684511200,  avance:97,  avanceProg:100, unidades:100,  plazo:287, inicio:'2025-07-21', termino:'2026-05-04' },
   { id:14, cc:'013', anio:2024, ncontrato:'2490-70-LR24',  nombre:'Providencia',         tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:479800000,  facturado:321457409,  avance:100, avanceProg:100, unidades:34,   plazo:310, inicio:'2025-03-17', termino:'2026-01-21' },
   { id:15, cc:'014', anio:2024, ncontrato:'4160-23-LR24',  nombre:'Hualpén',             tipo:'luminaria', estado:'completado', ubicacion:'Hualpén',             contrato:2597763601, facturado:2597763601, avance:100, avanceProg:100, unidades:7560, plazo:131, inicio:'2025-04-01', termino:'2025-08-10' },
   { id:16, cc:'016', anio:2024, ncontrato:'2490-87-LE24',  nombre:'Providencia II',      tipo:'camara',    estado:'completado', ubicacion:'Providencia',         contrato:43000000,   facturado:34025883,   avance:100, avanceProg:100, unidades:14,   plazo:98,  inicio:'2025-04-14', termino:'2025-07-21' },
   { id:17, cc:'015', anio:2024, ncontrato:'Privado',        nombre:'Nevados de Chillán',  tipo:'luminaria', estado:'completado', ubicacion:'Chillán',             contrato:34649370,   facturado:34649370,   avance:100, avanceProg:100, unidades:63,   plazo:43,  inicio:'2025-03-26', termino:'2025-05-08' },
   { id:18, cc:'018', anio:2025, ncontrato:'4726-1-LP25',   nombre:'UMCE',                tipo:'luminaria', estado:'completado', ubicacion:'Santiago',            contrato:81700769,   facturado:81700769,   avance:100, avanceProg:100, unidades:144,  plazo:91,  inicio:'2025-05-22', termino:'2025-08-21' },
-  { id:19, cc:'019', anio:2025, ncontrato:'2369-70-LR24',  nombre:'Arica',               tipo:'luminaria', estado:'activo',     ubicacion:'Arica',               contrato:952929114,  facturado:285535954,  avance:61,  avanceProg:79,  unidades:689,  plazo:289, inicio:'2025-09-24', termino:'2026-07-10' },
+  { id:19, cc:'019', anio:2025, ncontrato:'2369-70-LR24',  nombre:'Arica',               tipo:'luminaria', estado:'activo',     ubicacion:'Arica',               contrato:952929114,  facturado:285535954,  avance:61,  avanceProg:81,  unidades:689,  plazo:289, inicio:'2025-09-24', termino:'2026-07-10' },
   { id:20, anio:2025, ncontrato:'4459-27-LR24',  nombre:'Pichilemu',           tipo:'luminaria', estado:'activo',     ubicacion:'Pichilemu',           contrato:70000000,   facturado:70000000,   avance:82,  avanceProg:100, unidades:2255, plazo:90,  inicio:'2025-11-13', termino:'2026-02-11' },
-  { id:21, cc:'020', anio:2026, ncontrato:'2384-41-LR25',  nombre:'Calama',              tipo:'luminaria', estado:'activo',     ubicacion:'Calama',              contrato:800000000,  facturado:0,          avance:0,   avanceProg:0,   unidades:144,  plazo:180, inicio:'2026-05-18', termino:'2026-11-14' },
-  { id:22, cc:'022', anio:2026, ncontrato:'2581-32-LR25',  nombre:'Conchalí',            tipo:'luminaria', estado:'activo',     ubicacion:'Conchalí',            contrato:1251426033, facturado:0,          avance:0,   avanceProg:0,   unidades:5000, plazo:240, inicio:'2026-05-25', termino:'2027-01-20' },
+  { id:21, cc:'020', anio:2026, ncontrato:'2384-41-LR25',  nombre:'Calama',              tipo:'luminaria', estado:'activo',     ubicacion:'Calama',              contrato:653339949,  facturado:0,          avance:0,   avanceProg:0,   unidades:144,  plazo:180, inicio:'2026-05-18', termino:'2026-11-14' },
+  { id:22, cc:'022', anio:2026, ncontrato:'2581-32-LR25',  nombre:'Conchalí',            tipo:'luminaria', estado:'activo',     ubicacion:'Conchalí',            contrato:1251426033, facturado:0,          avance:0,   avanceProg:0,   unidades:5069, plazo:240, inicio:'2026-05-25', termino:'2027-01-20' },
 ];
 
 // ══════════════════════════════════════════════════════
