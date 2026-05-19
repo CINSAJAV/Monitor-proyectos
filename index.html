@@ -127,13 +127,21 @@
     /* ── Tables ── */
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .section-header h3 { font-size: 14px; font-weight: 700; }
-    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 22px; }
-    table { width: 100%; border-collapse: collapse; }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; overflow-y: hidden; margin-bottom: 22px; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
     thead th { background: var(--surface); padding: 10px 14px; text-align: left; font-size: 10px;
       font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .7px; white-space: nowrap; }
     tbody tr { border-top: 1px solid var(--border); transition: background .15s; }
     tbody tr:hover { background: rgba(255,255,255,.03); }
     td { padding: 11px 14px; font-size: 12px; }
+    /* Columna proyecto sticky en móvil */
+    @media (max-width: 900px) {
+      thead th:first-child, td:first-child {
+        position: sticky; left: 0; background: var(--card); z-index: 1;
+        box-shadow: 2px 0 6px rgba(0,0,0,.3);
+      }
+      thead th:first-child { background: var(--surface); }
+    }
 
     /* ── Progress ── */
     .progress-wrap { min-width: 110px; }
