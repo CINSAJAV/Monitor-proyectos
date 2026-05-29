@@ -691,6 +691,26 @@ let proyectos = [
 ];
 
 // ══════════════════════════════════════════════════════
+// CONTROL DE COSTOS (datos extraídos de archivos de control)
+// ══════════════════════════════════════════════════════
+const CTRL_DATA = {
+  3:  { periodo:'Oct-24', costoPpto:206725190,  costoForecast:243810663 },
+  5:  { periodo:'Feb-26', costoForecast:229792700 },
+  6:  { periodo:'Garantía', costoPpto:39924228, costoForecast:32034495, resultadoPpto:13997500, resultadoForecast:22145528 },
+  7:  { periodo:'Dic-24', costoForecast:20557334, resultadoForecast:17731143 },
+  8:  { periodo:'Jul-25', costoPpto:83255203,   costoForecast:83871631 },
+  10: { periodo:'Sep-24', costoForecast:37791618 },
+  11: { periodo:'Sep-25', costoPpto:145153547,  costoForecast:129731968 },
+  12: { periodo:'Ene-25', costoPpto:67633521,   costoForecast:45154199 },
+  13: { periodo:'Mar-26', costoPpto:1843626495, resultadoPpto:517098905 },
+  15: { periodo:'Nov-25', costoPpto:1874739793, costoForecast:1920237946 },
+  16: { periodo:'Abr-26', costoForecast:43187390, resultadoForecast:-187390 },
+  18: { periodo:'Jul-25', costoPpto:60850419,   costoForecast:60485024 },
+  19: { periodo:'Mar-26', costoPpto:503568437,  costoForecast:713148930, resultadoPpto:449360677, resultadoForecast:239780184 },
+  21: { periodo:'Abr-26', costoPpto:389777769,  costoForecast:391442725 },
+};
+
+// ══════════════════════════════════════════════════════
 // UTILIDADES
 // ══════════════════════════════════════════════════════
 const fmtCLP  = n => '$' + Math.round(n).toLocaleString('es-CL');
@@ -1932,6 +1952,31 @@ function openDetail(id) {
     <div class="detail-item"><div class="dlabel">Total Facturado</div><div class="dvalue" style="color:var(--accent-green)">${fmtCLP(p.facturado)}</div></div>
     <div class="detail-item"><div class="dlabel">% Facturado</div><div class="dvalue">${pf}%</div></div>
     <div class="detail-item"><div class="dlabel">Saldo Ganado x Facturar</div><div class="dvalue" style="color:${sf>0?'var(--accent-red)':'var(--text-muted)'}">${fmtCLP(sf)}</div></div>
+    ${(() => {
+      const c = CTRL_DATA[p.id];
+      if (!c) return '';
+      const margenColor = m => m >= 20 ? 'var(--accent-green)' : m >= 10 ? 'var(--accent-orange)' : 'var(--accent-red)';
+      const margenPpto = c.resultadoPpto != null
+        ? Math.round(c.resultadoPpto / p.contrato * 100)
+        : c.costoPpto != null
+          ? Math.round((p.contrato - c.costoPpto) / p.contrato * 100)
+          : null;
+      const margenForecast = c.resultadoForecast != null
+        ? Math.round(c.resultadoForecast / p.contrato * 100)
+        : c.costoForecast != null
+          ? Math.round((p.contrato - c.costoForecast) / p.contrato * 100)
+          : null;
+      let html = `<div class="detail-item" style="grid-column:1/-1"><div class="dlabel" style="font-size:11px;letter-spacing:.05em;color:var(--accent-blue);text-transform:uppercase">📊 Control de Costos · ${c.periodo}</div></div>`;
+      if (c.costoPpto != null)
+        html += `<div class="detail-item"><div class="dlabel">Costo Presupuestado</div><div class="dvalue">${fmtCLP(c.costoPpto)}</div></div>`;
+      if (c.costoForecast != null)
+        html += `<div class="detail-item"><div class="dlabel">Costo Forecast</div><div class="dvalue">${fmtCLP(c.costoForecast)}</div></div>`;
+      if (margenPpto != null)
+        html += `<div class="detail-item"><div class="dlabel">Margen Ppto.</div><div class="dvalue" style="color:${margenColor(margenPpto)};font-weight:700">${margenPpto}%</div></div>`;
+      if (margenForecast != null)
+        html += `<div class="detail-item"><div class="dlabel">Margen Forecast</div><div class="dvalue" style="color:${margenColor(margenForecast)};font-weight:700">${margenForecast}%</div></div>`;
+      return html;
+    })()}
   `;
   document.getElementById('modal-detail').classList.add('open');
 }
