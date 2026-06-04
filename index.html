@@ -1989,6 +1989,98 @@ document.getElementById('modal-new').addEventListener('click', e => { if(e.targe
 document.getElementById('modal-detail').addEventListener('click', e => { if(e.target===e.currentTarget) closeDetail(); });
 
 // ══════════════════════════════════════════════════════
+// SINCRONIZACIÓN AUTOMÁTICA CON GOOGLE SHEETS
+// ══════════════════════════════════════════════════════
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTv5lZAMvzuzf4ofzF6cSyYvWZIAicjvCFvMEj96mngNpxZI1EStNILPOzUYLF0rQ/pub?gid=310246728&single=true&output=csv';
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (const c of line) {
+    if (c === '"') inQ = !inQ;
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+function csvNum(s) {
+  if (!s) return 0;
+  const n = parseInt(s.replace(/[$\s,]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+function csvPct(s) {
+  if (!s || s.trim() === '-') return 0;
+  return parseInt(s) || 0;
+}
+function csvFecha(s) {
+  if (!s || !s.trim() || s.trim() === '-') return null;
+  const [m, d, y] = s.trim().split('/');
+  if (!y) return null;
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+function csvTipo(s) {
+  const t = (s || '').toLowerCase();
+  if (t.includes('poste')) return 'poste';
+  if (t.includes('telev')) return 'camara';
+  return 'luminaria';
+}
+function csvUbicacion(nombre) {
+  return nombre.replace(/\s+(II|III|IV|V|I)$/i, '').replace(/^SAR\s+/, '').trim();
+}
+
+async function fetchProyectosCSV() {
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) return;
+    const text = await res.text();
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    const parsed = [];
+    for (let i = 2; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      const anio = parseInt(cols[0]);
+      if (!anio || anio < 2020) break;
+      const nombre = (cols[2] || '').trim();
+      if (!nombre) break;
+      const avanceProg = csvPct(cols[9]);
+      const avance     = csvPct(cols[10]);
+      const contrato   = csvNum(cols[5]);
+      const facturado  = csvNum(cols[15]);
+      const fact2023   = csvNum(cols[11]);
+      const fact2024   = csvNum(cols[12]);
+      const fact2025   = csvNum(cols[13]);
+      const fact2026   = csvNum(cols[14]);
+      const obj = {
+        id:        parsed.length + 1,
+        anio,
+        ncontrato: (cols[1] || '').trim(),
+        nombre,
+        tipo:      csvTipo(cols[3]),
+        estado:    (avance >= 100 && avanceProg >= 100) ? 'completado' : 'activo',
+        ubicacion: csvUbicacion(nombre),
+        contrato,
+        facturado,
+        avance,
+        avanceProg,
+        unidades:  csvNum(cols[4]),
+        plazo:     parseInt(cols[6]) || 0,
+        inicio:    csvFecha(cols[7]),
+        termino:   csvFecha(cols[8]),
+      };
+      if (fact2023) obj.fact2023 = fact2023;
+      if (fact2024) obj.fact2024 = fact2024;
+      if (fact2025) obj.fact2025 = fact2025;
+      if (fact2026) obj.fact2026 = fact2026;
+      parsed.push(obj);
+    }
+    if (parsed.length >= 5) {
+      proyectos = parsed;
+      renderDashboard();
+    }
+  } catch (_) { /* sin red → usa datos hardcodeados */ }
+}
+
+// ══════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════
 // LOGIN
 // ══════════════════════════════════════════════════════
@@ -2027,6 +2119,7 @@ function checkAuth() {
 // ══════════════════════════════════════════════════════
 checkAuth();
 renderDashboard();
+fetchProyectosCSV();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
