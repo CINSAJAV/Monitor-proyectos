@@ -2014,7 +2014,7 @@ function parseCSVLine(line) {
 }
 function csvNum(s) {
   if (!s) return 0;
-  const n = parseInt(s.replace(/[$\s,]/g, ''));
+  const n = parseInt(s.replace(/[$\s,.]/g, ''));
   return isNaN(n) ? 0 : n;
 }
 function csvPct(s) {
