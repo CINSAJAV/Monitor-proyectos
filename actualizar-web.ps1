@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # CINSA - Actualizador automático de Monitor de Proyectos
 # Lee el Excel de Google Drive y actualiza la página web
 # ============================================================
