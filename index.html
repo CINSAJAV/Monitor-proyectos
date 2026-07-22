@@ -455,6 +455,7 @@
           <button class="filter-btn" onclick="setContabYear(2024,this)">2024</button>
           <button class="filter-btn" onclick="setContabYear(2025,this)">2025</button>
           <button class="filter-btn active" onclick="setContabYear(2026,this)">2026</button>
+          <button class="filter-btn" onclick="setContabYear('todos',this)">Consolidado</button>
         </div>
       </div>
       <div class="kpi-grid" id="kpi-contab"></div>
@@ -1661,6 +1662,8 @@ function renderResumen() {
 }
 
 function renderContabilidad() {
+  if (contabYear === 'todos') { renderContabilidadConsolidado(); return; }
+
   const lmMap = { 2024: LIBRO_MAYOR_2024, 2025: LIBRO_MAYOR_2025, 2026: LIBRO_MAYOR_2026 };
   const lm = lmMap[contabYear];
   const yr = contabYear;
@@ -1679,7 +1682,6 @@ function renderContabilidad() {
   });
 
   // Update dynamic text labels
-  const yStr = String(yr);
   const el = id => document.getElementById(id);
   if (el('contab-chart-title')) el('contab-chart-title').textContent = `Ingresos vs Costos Directos — ${yr}`;
   if (el('contab-pl-title'))    el('contab-pl-title').textContent    = `P&L Mensual ${yr}`;
@@ -1704,8 +1706,10 @@ function renderContabilidad() {
   const totalAdm  = admArr.reduce((a,b)=>a+b,0);
   const totalRO   = roArr.reduce((a,b)=>a+b,0);
 
-  // KPIs
-  const periodoLabel = yr === 2026 ? 'Ene – May 2026' : `Ene – Dic ${yr}`;
+  // KPIs — period label derived from actual data
+  const lastMes = meses[meses.length - 1] || `${yr}-12`;
+  const [, lastMo] = lastMes.split('-');
+  const periodoLabel = meses.length === 12 ? `Ene – Dic ${yr}` : `Ene – ${MESES_ES[parseInt(lastMo)-1]} ${yr}`;
   document.getElementById('kpi-contab').innerHTML = `
     <div class="kpi-card"><div class="kpi-label">Ingresos Facturados ${yr}</div>
       <div class="kpi-value">${fmtCLP(totalIng)}</div>
@@ -1818,6 +1822,176 @@ function renderContabilidad() {
     <td>—</td>
   </tr>`;
   document.getElementById('tbody-contab-cc').innerHTML = ccRows;
+}
+
+function renderContabilidadConsolidado() {
+  const MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const el = id => document.getElementById(id);
+
+  // Per-year aggregates
+  const yrData = [
+    { yr: 2024, lm: LIBRO_MAYOR_2024 },
+    { yr: 2025, lm: LIBRO_MAYOR_2025 },
+    { yr: 2026, lm: LIBRO_MAYOR_2026 },
+  ];
+  const yrTotals = yrData.map(({ yr, lm }) => {
+    const ing  = lm.ingresos.reduce((a,r) => a+r.monto, 0);
+    const cost = lm.costos.reduce((a,r) => a+r.monto, 0);
+    const adm  = lm.gastosAdm.reduce((a,r) => a+r.monto, 0);
+    const ro   = ing - cost - adm;
+    const allMeses = [...new Set([...lm.ingresos.map(r=>r.mes),...lm.costos.map(r=>r.mes),...lm.gastosAdm.map(r=>r.mes)])].sort();
+    const lastMes = allMeses[allMeses.length - 1] || `${yr}-12`;
+    const [, lmMo] = lastMes.split('-');
+    const periodo = allMeses.length === 12 ? `Ene–Dic ${yr}` : `Ene–${MESES_ES[parseInt(lmMo)-1]} ${yr}`;
+    return { yr, ing, cost, adm, ro, periodo };
+  });
+
+  const totalIng  = yrTotals.reduce((a,r) => a+r.ing,  0);
+  const totalCost = yrTotals.reduce((a,r) => a+r.cost, 0);
+  const totalAdm  = yrTotals.reduce((a,r) => a+r.adm,  0);
+  const totalRO   = yrTotals.reduce((a,r) => a+r.ro,   0);
+
+  // Labels
+  if (el('contab-chart-title')) el('contab-chart-title').textContent = 'Ingresos vs Costos — Consolidado 2024–2026';
+  if (el('contab-pl-title'))    el('contab-pl-title').textContent    = 'P&L Anual Consolidado 2024–2026';
+  if (el('th-ing-año'))  el('th-ing-año').textContent  = 'Ingresos';
+  if (el('th-cost-año')) el('th-cost-año').textContent = 'Costos';
+  if (el('th-res-año'))  el('th-res-año').textContent  = 'Resultado';
+
+  // KPIs
+  const margenTotal = totalIng ? ((totalRO/totalIng)*100).toFixed(1) : '—';
+  el('kpi-contab').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Ingresos Facturados 2024–2026</div>
+      <div class="kpi-value">${fmtCLP(totalIng)}</div>
+      <div class="kpi-sub">Ene 2024 – Jun 2026</div></div>
+    <div class="kpi-card"><div class="kpi-label">Costos Directos 2024–2026</div>
+      <div class="kpi-value" style="color:var(--accent-red)">${fmtCLP(totalCost)}</div>
+      <div class="kpi-sub">Cuentas 41-xx</div></div>
+    <div class="kpi-card"><div class="kpi-label">Gastos Administrativos 2024–2026</div>
+      <div class="kpi-value" style="color:var(--accent-orange)">${fmtCLP(totalAdm)}</div>
+      <div class="kpi-sub">Cuentas 42-xx</div></div>
+    <div class="kpi-card"><div class="kpi-label">Resultado Operacional Acumulado</div>
+      <div class="kpi-value" style="color:${totalRO>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtCLP(totalRO)}</div>
+      <div class="kpi-sub">Margen ${margenTotal}%</div></div>`;
+
+  // Chart — all months across 3 years
+  const allMesSet = new Set([
+    ...LIBRO_MAYOR_2024.ingresos.map(r=>r.mes),...LIBRO_MAYOR_2024.costos.map(r=>r.mes),...LIBRO_MAYOR_2024.gastosAdm.map(r=>r.mes),
+    ...LIBRO_MAYOR_2025.ingresos.map(r=>r.mes),...LIBRO_MAYOR_2025.costos.map(r=>r.mes),...LIBRO_MAYOR_2025.gastosAdm.map(r=>r.mes),
+    ...LIBRO_MAYOR_2026.ingresos.map(r=>r.mes),...LIBRO_MAYOR_2026.costos.map(r=>r.mes),...LIBRO_MAYOR_2026.gastosAdm.map(r=>r.mes),
+  ]);
+  const allMeses = [...allMesSet].sort();
+  const ingByM={}, costByM={}, admByM={};
+  allMeses.forEach(m => { ingByM[m]=0; costByM[m]=0; admByM[m]=0; });
+  [LIBRO_MAYOR_2024, LIBRO_MAYOR_2025, LIBRO_MAYOR_2026].forEach(lm => {
+    lm.ingresos.forEach(r => { if(ingByM[r.mes]!==undefined) ingByM[r.mes]+=r.monto; });
+    lm.costos.forEach(r =>   { if(costByM[r.mes]!==undefined) costByM[r.mes]+=r.monto; });
+    lm.gastosAdm.forEach(r =>{ if(admByM[r.mes]!==undefined) admByM[r.mes]+=r.monto; });
+  });
+  const chartLabels = allMeses.map(m => { const [y,mo]=m.split('-'); return `${MESES_ES[parseInt(mo)-1]} ${y.slice(2)}`; });
+  const ingArr2  = allMeses.map(m => ingByM[m]);
+  const costArr2 = allMeses.map(m => costByM[m]);
+  const admArr2  = allMeses.map(m => admByM[m]);
+  const roArr2   = allMeses.map(m => ingByM[m]-costByM[m]-admByM[m]);
+
+  if (chartContab) chartContab.destroy();
+  chartContab = new Chart(el('chartContab').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: chartLabels,
+      datasets: [
+        { label:'Ingresos', data: ingArr2, backgroundColor:'rgba(34,197,94,.75)', order:2 },
+        { label:'Costos directos', data: costArr2, backgroundColor:'rgba(255,61,107,.65)', order:2 },
+        { label:'Gastos adm.', data: admArr2, backgroundColor:'rgba(249,115,22,.65)', order:2 },
+        { label:'Resultado Op.', data: roArr2, type:'line', borderColor:'#4d61ff',
+          backgroundColor:'rgba(77,97,255,.12)', fill:true, tension:.35, pointRadius:3,
+          pointBackgroundColor: roArr2.map(v=>v>=0?'#22c55e':'#ff3d6b'), order:1 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      scales: { y:{ ticks:{ callback: v => fmtCLP(v), color:'#7d90a8', font:{size:10} }, grid:{color:'rgba(255,255,255,.05)'} },
+                x:{ ticks:{color:'#7d90a8',font:{size:9},maxRotation:45}, grid:{color:'rgba(255,255,255,.05)'} } },
+      plugins: { legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx => `${ctx.dataset.label}: ${fmtCLP(ctx.parsed.y)}` } } }
+    }
+  });
+
+  // P&L table — one row per year
+  let plRows = '';
+  yrTotals.forEach(({ yr, ing, cost, adm, ro, periodo }) => {
+    const margen = ing ? ((ro/ing)*100).toFixed(1)+'%' : '—';
+    const color = ro>=0?'var(--accent-green)':'var(--accent-red)';
+    plRows += `<tr>
+      <td style="font-weight:600">${yr} <span style="font-size:11px;color:var(--text-muted);font-weight:400">(${periodo})</span></td>
+      <td>${fmtCLP(ing)}</td>
+      <td style="color:var(--accent-red)">${fmtCLP(cost)}</td>
+      <td style="color:var(--accent-orange)">${fmtCLP(adm)}</td>
+      <td style="color:${color};font-weight:700">${fmtCLP(ro)}</td>
+      <td><span class="badge ${ro>=0?'badge-green':'badge-red'}">${margen}</span></td>
+    </tr>`;
+  });
+  const margenTot = totalIng ? ((totalRO/totalIng)*100).toFixed(1)+'%' : '—';
+  plRows += `<tr style="font-weight:700;border-top:2px solid var(--border)">
+    <td>TOTAL ACUMULADO</td>
+    <td>${fmtCLP(totalIng)}</td>
+    <td style="color:var(--accent-red)">${fmtCLP(totalCost)}</td>
+    <td style="color:var(--accent-orange)">${fmtCLP(totalAdm)}</td>
+    <td style="color:${totalRO>=0?'var(--accent-green)':'var(--accent-red)'}">${fmtCLP(totalRO)}</td>
+    <td><span class="badge ${totalRO>=0?'badge-green':'badge-red'}">${margenTot}</span></td>
+  </tr>`;
+  el('tbody-contab-pl').innerHTML = plRows;
+
+  // CC table — merged across all years
+  const allCCSet = new Set([
+    ...LIBRO_MAYOR_2024.ingresos.filter(r=>r.cc).map(r=>r.cc),
+    ...LIBRO_MAYOR_2024.costos.filter(r=>r.cc).map(r=>r.cc),
+    ...LIBRO_MAYOR_2025.ingresos.filter(r=>r.cc).map(r=>r.cc),
+    ...LIBRO_MAYOR_2025.costos.filter(r=>r.cc).map(r=>r.cc),
+    ...LIBRO_MAYOR_2026.ingresos.filter(r=>r.cc).map(r=>r.cc),
+    ...LIBRO_MAYOR_2026.costos.filter(r=>r.cc).map(r=>r.cc),
+  ]);
+  const allCCSorted = [...allCCSet].sort();
+  let ccRows = '', sumIngCC=0, sumCostCC=0, sumContrato=0, sumFact=0;
+  allCCSorted.forEach(cc => {
+    const proy = proyectos.find(p=>p.cc===cc);
+    let ingCC = 0, costCC = 0;
+    [[2024,LIBRO_MAYOR_2024],[2025,LIBRO_MAYOR_2025],[2026,LIBRO_MAYOR_2026]].forEach(([yrNum,lm]) => {
+      const ingYr = lm.ingresos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+      ingCC  += (yrNum===2024 && proy?.fact2024 && ingYr===0) ? proy.fact2024 : ingYr;
+      costCC += lm.costos.filter(r=>r.cc===cc).reduce((a,r)=>a+r.monto,0);
+    });
+    const nombre = CC_MAP[cc] || `CC-${cc}`;
+    const res    = ingCC - costCC;
+    const contrato  = proy ? proy.contrato  : null;
+    const facturado = proy ? proy.facturado : null;
+    const avance    = proy ? proy.avance    : null;
+    const margen = costCC > 0 ? ((res/costCC)*100).toFixed(1)+'%' : '—';
+    const margenColor = res>=0?'var(--accent-green)':'var(--accent-red)';
+    sumIngCC+=ingCC; sumCostCC+=costCC;
+    if(contrato)  sumContrato+=contrato;
+    if(facturado) sumFact+=facturado;
+    ccRows += `<tr>
+      <td><span class="badge badge-blue">CC-${cc}</span></td>
+      <td style="font-weight:600">${nombre}</td>
+      <td>${avance!==null?`<span class="badge ${avance>=100?'badge-green':avance>=60?'badge-blue':'badge-yellow'}">${avance}%</span>`:'<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${contrato?fmtM(contrato):'<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${facturado!==null?fmtM(facturado):'<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="color:var(--accent-green)">${fmtM(ingCC)}</td>
+      <td style="color:var(--accent-red)">${fmtM(costCC)}</td>
+      <td style="color:${margenColor};font-weight:700">${fmtM(res)}</td>
+      <td><span class="badge ${res>=0?'badge-green':'badge-red'}">${margen}</span></td>
+    </tr>`;
+  });
+  ccRows += `<tr style="font-weight:700;border-top:2px solid var(--border)">
+    <td colspan="2">TOTAL</td><td>—</td>
+    <td>${fmtM(sumContrato)}</td><td>${fmtM(sumFact)}</td>
+    <td style="color:var(--accent-green)">${fmtM(sumIngCC)}</td>
+    <td style="color:var(--accent-red)">${fmtM(sumCostCC)}</td>
+    <td style="color:${(sumIngCC-sumCostCC)>=0?'var(--accent-green)':'var(--accent-red)'};font-weight:700">${fmtM(sumIngCC-sumCostCC)}</td>
+    <td>—</td>
+  </tr>`;
+  el('tbody-contab-cc').innerHTML = ccRows;
 }
 
 // ══════════════════════════════════════════════════════
