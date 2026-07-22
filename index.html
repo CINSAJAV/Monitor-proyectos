@@ -660,7 +660,7 @@
 </div>
 
 <script>
-// Actualizado automáticamente el 2026-07-22 13:00
+// Actualizado automáticamente el 2026-07-22 14:00
 let proyectos = [
   { id:1, anio:2023, ncontrato:'3824-37-LR23', nombre:'Padre Hurtado', tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado', contrato:1631127731, facturado:1631127731, avance:100, inicio:'24-11-2023', termino:'16-07-2024', plazo:235 },
   { id:2, anio:2023, ncontrato:'3211-14-LQ23', nombre:'Collipulli', tipo:'luminaria', estado:'completado', ubicacion:'Collipulli', contrato:257559069, facturado:257559069, avance:100, inicio:'15-01-2024', termino:'25-12-2024', plazo:345 },
@@ -684,9 +684,10 @@ let proyectos = [
   { id:20, anio:2025, ncontrato:'4459-27-LR24', nombre:'Pichilemu', tipo:'luminaria', estado:'activo', ubicacion:'Pichilemu', contrato:70000000, facturado:70000000, avance:99, inicio:'13-11-2025', termino:'11-02-2026', plazo:90 },
   { id:21, anio:2026, ncontrato:'2384-41-LR25', nombre:'Calama', tipo:'luminaria', estado:'activo', ubicacion:'Calama', contrato:653339949, facturado:0, avance:0, inicio:'22-06-2026', termino:'19-12-2026', plazo:180 },
   { id:22, anio:2026, ncontrato:'2581-32-LR25', nombre:'Conchalí', tipo:'luminaria', estado:'activo', ubicacion:'Conchalí', contrato:1251426033, facturado:0, avance:0, inicio:'22-06-2026', termino:'17-02-2027', plazo:240 },
-  { id:23, anio:2026, ncontrato:'4085-18-LP26', nombre:'Longaví I', tipo:'luminaria', estado:'activo', ubicacion:'Longaví I', contrato:248868261, facturado:0, avance:0, inicio:'22-06-2026', termino:'19-12-2026', plazo:180 },
-  { id:24, anio:2026, ncontrato:'4085-19-LP26', nombre:'Longaví II', tipo:'luminaria', estado:'activo', ubicacion:'Longaví II', contrato:214546890, facturado:0, avance:0, inicio:'22-06-2026', termino:'19-12-2026', plazo:180 },
-  { id:25, anio:2026, ncontrato:'1191688-25-LP26', nombre:'El Bosque', tipo:'luminaria', estado:'activo', ubicacion:'El Bosque', contrato:252502395, facturado:0, avance:0, inicio:'22-06-2026', termino:'20-09-2026', plazo:90 }
+  { id:23, cc:'023', anio:2026, ncontrato:'4085-18-LP26', nombre:'Longaví I', tipo:'luminaria', estado:'activo', ubicacion:'Longaví I', contrato:248868261, facturado:0, avance:0, inicio:'22-06-2026', termino:'19-12-2026', plazo:180 },
+  { id:24, cc:'024', anio:2026, ncontrato:'4085-19-LP26', nombre:'Longaví II', tipo:'luminaria', estado:'activo', ubicacion:'Longaví II', contrato:214546890, facturado:0, avance:0, inicio:'22-06-2026', termino:'19-12-2026', plazo:180 },
+  { id:25, cc:'025', anio:2026, ncontrato:'1191688-25-LP26', nombre:'El Bosque', tipo:'luminaria', estado:'activo', ubicacion:'El Bosque', contrato:252502395, facturado:0, avance:0, inicio:'22-06-2026', termino:'20-09-2026', plazo:90 },
+  { id:26, cc:'026', anio:2026, ncontrato:'', nombre:'Quinta Normal', tipo:'luminaria', estado:'activo', ubicacion:'Quinta Normal', contrato:0, facturado:0, avance:0, inicio:'', termino:'', plazo:0 }
 ];
 
 // ══════════════════════════════════════════════════════
@@ -1152,6 +1153,7 @@ const CC_MAP = {
   '011':'Antofagasta', '012':'Ñuñoa', '013':'Providencia', '014':'Hualpén',
   '015':'Nevados de Chillán', '016':'Providencia II', '017':'AG Limache', '018':'UMCE',
   '019':'Arica', '020':'Calama', '021':'Lonquén', '022':'Conchalí',
+  '023':'Longaví I', '024':'Longaví II', '025':'El Bosque', '026':'Quinta Normal',
 };
 
 const LIBRO_MAYOR_2024 = {
