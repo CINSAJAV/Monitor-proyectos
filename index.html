@@ -660,10 +660,10 @@
 </div>
 
 <script>
-// Actualizado automáticamente el 2026-07-22 14:00
+// Actualizado automáticamente el 2026-07-22 16:00
 let proyectos = [
-  { id:1, anio:2023, ncontrato:'3824-37-LR23', nombre:'Padre Hurtado', tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado', contrato:1631127731, facturado:1631127731, avance:100, inicio:'24-11-2023', termino:'16-07-2024', plazo:235 },
-  { id:2, anio:2023, ncontrato:'3211-14-LQ23', nombre:'Collipulli', tipo:'luminaria', estado:'completado', ubicacion:'Collipulli', contrato:257559069, facturado:257559069, avance:100, inicio:'15-01-2024', termino:'25-12-2024', plazo:345 },
+  { id:1, cc:'000', anio:2023, ncontrato:'3824-37-LR23', nombre:'Padre Hurtado', tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado', contrato:1631127731, facturado:1631127731, avance:100, inicio:'24-11-2023', termino:'16-07-2024', plazo:235 },
+  { id:2, cc:'00A', anio:2023, ncontrato:'3211-14-LQ23', nombre:'Collipulli', tipo:'luminaria', estado:'completado', ubicacion:'Collipulli', contrato:257559069, facturado:257559069, avance:100, inicio:'15-01-2024', termino:'25-12-2024', plazo:345 },
   { id:3, anio:2024, ncontrato:'2582-74-LR23', nombre:'Santiago', tipo:'luminaria', estado:'completado', ubicacion:'Santiago', contrato:250682919, facturado:250682920, avance:100, inicio:'02-09-2024', termino:'06-03-2025', plazo:185 },
   { id:4, anio:2024, ncontrato:'3824-11-LQ24', nombre:'Padre Hurtado II', tipo:'luminaria', estado:'completado', ubicacion:'Padre Hurtado II', contrato:37274400, facturado:37274400, avance:100, inicio:'12-09-2024', termino:'11-11-2024', plazo:60 },
   { id:5, anio:2024, ncontrato:'3775-16-LR24', nombre:'Hijuelas', tipo:'camara', estado:'completado', ubicacion:'Hijuelas', contrato:357708414, facturado:357708414, avance:100, inicio:'24-03-2025', termino:'29-08-2025', plazo:158 },
@@ -1147,6 +1147,7 @@ const FLUJO_CAJA = {
 // Fuente: exportaciones filtradas ctas resultado (31-43) desde Softland
 // ══════════════════════════════════════════════════════
 const CC_MAP = {
+  '000':'Padre Hurtado', '00A':'Collipulli',
   '001':'Padre Hurtado II', '002':'Hijuelas', '003':'Quilicura II',
   '004':'Oficina Central', '005':'Limache', '006':'Pedro Aguirre Cerda',
   '007':'Quilicura', '008':'Santiago', '009':'SAR La Reina', '010':'Rengo',
@@ -1158,39 +1159,31 @@ const CC_MAP = {
 
 const LIBRO_MAYOR_2024 = {
   ingresos: [
-    {mes:'2024-03',cc:'',monto:121600000},
-    {mes:'2024-04',cc:'',monto:203574793},
-    {mes:'2024-05',cc:'',monto:478823907},
-    {mes:'2024-06',cc:'',monto:561022637},
-    {mes:'2024-07',cc:'',monto:94651869},
-    {mes:'2024-08',cc:'',monto:130949844},
-    {mes:'2024-09',cc:'',monto:120657089},
-    {mes:'2024-10',cc:'',monto:494672939},
-    {mes:'2024-11',cc:'',monto:370461711},
-    {mes:'2024-12',cc:'',monto:141140375},
+    {mes:'2024-01',cc:'',monto:10000},{mes:'2024-01',cc:'000',monto:-10000},
+    {mes:'2024-03',cc:'000',monto:121600000},
+    {mes:'2024-04',cc:'000',monto:76396662},{mes:'2024-04',cc:'00A',monto:127178131},
+    {mes:'2024-05',cc:'000',monto:478823907},
+    {mes:'2024-06',cc:'000',monto:561022637},
+    {mes:'2024-07',cc:'009',monto:13300767},{mes:'2024-07',cc:'00A',monto:81351102},
+    {mes:'2024-08',cc:'009',monto:3146000},{mes:'2024-08',cc:'012',monto:127803844},
+    {mes:'2024-09',cc:'006',monto:23698089},{mes:'2024-09',cc:'012',monto:96959000},
+    {mes:'2024-10',cc:'000',monto:137105587},{mes:'2024-10',cc:'006',monto:79859336},{mes:'2024-10',cc:'007',monto:55990000},{mes:'2024-10',cc:'009',monto:19595798},{mes:'2024-10',cc:'010',monto:30332443},{mes:'2024-10',cc:'012',monto:171789775},
+    {mes:'2024-11',cc:'005',monto:46243054},{mes:'2024-11',cc:'007',monto:55990000},{mes:'2024-11',cc:'009',monto:43700958},{mes:'2024-11',cc:'012',monto:224527699},
+    {mes:'2024-12',cc:'001',monto:27024400},{mes:'2024-12',cc:'008',monto:13249544},{mes:'2024-12',cc:'009',monto:6134218},{mes:'2024-12',cc:'010',monto:9162573},{mes:'2024-12',cc:'012',monto:85569640},
   ],
   costos: [
-    {mes:'2024-01',cc:'',monto:17251071},{mes:'2024-02',cc:'',monto:21065465},
-    {mes:'2024-03',cc:'',monto:71670408},{mes:'2024-04',cc:'',monto:39866519},
-    {mes:'2024-05',cc:'',monto:82599345},{mes:'2024-06',cc:'',monto:113469778},
-    {mes:'2024-07',cc:'',monto:66730685},{mes:'2024-08',cc:'',monto:55199781},
-    {mes:'2024-09',cc:'',monto:121261281},
-    {mes:'2024-10',cc:'',monto:49295878},{mes:'2024-10',cc:'001',monto:27258968},
-    {mes:'2024-10',cc:'003',monto:151657},{mes:'2024-10',cc:'004',monto:2052000},
-    {mes:'2024-10',cc:'005',monto:5832058},{mes:'2024-10',cc:'006',monto:17100692},
-    {mes:'2024-10',cc:'007',monto:1773802},{mes:'2024-10',cc:'008',monto:21147683},
-    {mes:'2024-10',cc:'009',monto:17585698},{mes:'2024-10',cc:'010',monto:3183438},
-    {mes:'2024-10',cc:'011',monto:221924},
-    {mes:'2024-11',cc:'',monto:55330898},{mes:'2024-11',cc:'001',monto:4832072},
-    {mes:'2024-11',cc:'002',monto:28175400},{mes:'2024-11',cc:'003',monto:25361087},
-    {mes:'2024-11',cc:'004',monto:212651},{mes:'2024-11',cc:'006',monto:3547808},
-    {mes:'2024-11',cc:'007',monto:-637961},{mes:'2024-11',cc:'008',monto:28050006},
-    {mes:'2024-11',cc:'009',monto:2017866},{mes:'2024-11',cc:'011',monto:40915777},
-    {mes:'2024-11',cc:'012',monto:19270100},{mes:'2024-11',cc:'013',monto:19200},
-    {mes:'2024-12',cc:'',monto:873596980},{mes:'2024-12',cc:'001',monto:433739},
-    {mes:'2024-12',cc:'002',monto:4755570},{mes:'2024-12',cc:'003',monto:74589610},
-    {mes:'2024-12',cc:'004',monto:2250785},{mes:'2024-12',cc:'005',monto:347826},
-    {mes:'2024-12',cc:'008',monto:813550},{mes:'2024-12',cc:'009',monto:82200},
+    {mes:'2024-01',cc:'',monto:9003245},{mes:'2024-01',cc:'004',monto:17251071},
+    {mes:'2024-02',cc:'',monto:6535327},{mes:'2024-02',cc:'004',monto:22792732},
+    {mes:'2024-03',cc:'',monto:-18800098},{mes:'2024-03',cc:'000',monto:52436610},{mes:'2024-03',cc:'004',monto:20302529},
+    {mes:'2024-04',cc:'',monto:2231356},{mes:'2024-04',cc:'000',monto:22022453},{mes:'2024-04',cc:'004',monto:27874460},
+    {mes:'2024-05',cc:'',monto:9201210},{mes:'2024-05',cc:'000',monto:56712687},{mes:'2024-05',cc:'004',monto:28628309},
+    {mes:'2024-06',cc:'',monto:26425911},{mes:'2024-06',cc:'000',monto:83720106},{mes:'2024-06',cc:'004',monto:26728924},
+    {mes:'2024-07',cc:'',monto:21918056},{mes:'2024-07',cc:'000',monto:41735504},{mes:'2024-07',cc:'004',monto:24564426},
+    {mes:'2024-08',cc:'',monto:52015551},{mes:'2024-08',cc:'000',monto:570770},{mes:'2024-08',cc:'004',monto:26532456},
+    {mes:'2024-09',cc:'',monto:95957013},{mes:'2024-09',cc:'000',monto:8851292},{mes:'2024-09',cc:'004',monto:31690913},
+    {mes:'2024-10',cc:'',monto:23330841},{mes:'2024-10',cc:'000',monto:584762},{mes:'2024-10',cc:'001',monto:27258968},{mes:'2024-10',cc:'003',monto:151657},{mes:'2024-10',cc:'004',monto:40087890},{mes:'2024-10',cc:'005',monto:5832058},{mes:'2024-10',cc:'006',monto:17100692},{mes:'2024-10',cc:'007',monto:1773802},{mes:'2024-10',cc:'008',monto:21147683},{mes:'2024-10',cc:'009',monto:17585698},{mes:'2024-10',cc:'010',monto:3183438},{mes:'2024-10',cc:'011',monto:221924},
+    {mes:'2024-11',cc:'',monto:26181382},{mes:'2024-11',cc:'001',monto:4832072},{mes:'2024-11',cc:'002',monto:28175400},{mes:'2024-11',cc:'003',monto:25361087},{mes:'2024-11',cc:'004',monto:42040994},{mes:'2024-11',cc:'006',monto:3547808},{mes:'2024-11',cc:'007',monto:-637961},{mes:'2024-11',cc:'008',monto:28050006},{mes:'2024-11',cc:'009',monto:2017866},{mes:'2024-11',cc:'011',monto:40915777},{mes:'2024-11',cc:'012',monto:33250100},{mes:'2024-11',cc:'013',monto:19200},
+    {mes:'2024-12',cc:'',monto:1464252966},{mes:'2024-12',cc:'001',monto:4491639},{mes:'2024-12',cc:'002',monto:49999761},{mes:'2024-12',cc:'003',monto:79534328},{mes:'2024-12',cc:'004',monto:-207976387},{mes:'2024-12',cc:'005',monto:1267154},{mes:'2024-12',cc:'006',monto:7019640},{mes:'2024-12',cc:'007',monto:20072810},{mes:'2024-12',cc:'008',monto:2754050},{mes:'2024-12',cc:'009',monto:-680941},{mes:'2024-12',cc:'012',monto:136779972},
   ],
   gastosAdm: [
     {mes:'2024-01',monto:2801176},{mes:'2024-02',monto:7852024},
@@ -1204,7 +1197,7 @@ const LIBRO_MAYOR_2024 = {
 
 const LIBRO_MAYOR_2025 = {
   ingresos: [
-    {mes:'2025-01',cc:'',monto:49029836},{mes:'2025-01',cc:'001',monto:10250000},
+    {mes:'2025-01',cc:'00A',monto:49029836},{mes:'2025-01',cc:'001',monto:10250000},
     {mes:'2025-01',cc:'008',monto:56124038},
     {mes:'2025-02',cc:'005',monto:4437110},{mes:'2025-02',cc:'008',monto:74175590},
     {mes:'2025-03',cc:'003',monto:129999990},{mes:'2025-03',cc:'007',monto:-55990000},
