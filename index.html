@@ -2184,8 +2184,10 @@ async function fetchProyectosCSV() {
       const cols = parseCSVLine(lines[i]);
       const anio = parseInt(cols[0]);
       if (!anio || anio < 2020) break;
-      const nombre = (cols[2] || '').trim();
-      if (!nombre) break;
+      const rawCC  = (cols[2] || '').trim();
+      if (!rawCC) break;
+      const cc     = rawCC;
+      const nombre = CC_MAP[cc] || rawCC;
       const avanceProg = csvPct(cols[9]);
       const avance     = csvPct(cols[10]);
       const contrato   = csvNum(cols[5]);
@@ -2197,11 +2199,12 @@ async function fetchProyectosCSV() {
       const obj = {
         id:        parsed.length + 1,
         anio,
+        cc,
         ncontrato: (cols[1] || '').trim(),
         nombre,
         tipo:      csvTipo(cols[3]),
         estado:    avance >= 100 ? 'completado' : 'activo',
-        ubicacion: csvUbicacion(nombre),
+        ubicacion: CC_MAP[cc] ? nombre : csvUbicacion(nombre),
         contrato,
         facturado,
         avance,
