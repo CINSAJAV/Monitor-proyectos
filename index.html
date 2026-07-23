@@ -2190,7 +2190,7 @@ async function fetchProyectosCSV() {
       const nombre = CC_MAP[cc] || rawCC;
       const avanceProg = csvPct(cols[10]);         // col K: avance programado %
       const avance    = csvPct(cols[11]);          // col L: avance real %
-      const contrato  = csvNum(cols[6]) * 1000000; // col G: almacenado en MM$
+      const contrato  = csvNum(cols[6]);             // col G: valor directo en CLP
       const fact2023  = csvNum(cols[12]);          // col M
       const fact2024  = csvNum(cols[13]);          // col N
       const fact2025  = csvNum(cols[14]);          // col O
