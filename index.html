@@ -2188,28 +2188,17 @@ async function fetchProyectosCSV() {
       if (!rawCC) break;
       const cc     = rawCC;
       const nombre = CC_MAP[cc] || rawCC;
-      const avance    = csvPct(cols[10]);
+      const avanceProg = csvPct(cols[10]);         // col K: avance programado %
+      const avance    = csvPct(cols[11]);          // col L: avance real %
       const contrato  = csvNum(cols[6]) * 1000000; // col G: almacenado en MM$
-      const facturado = csvNum(cols[15]);
-      const fact2023  = csvNum(cols[11]);
-      const fact2024  = csvNum(cols[12]);
-      const fact2025  = csvNum(cols[13]);
-      const fact2026  = csvNum(cols[14]);
-      const plazo     = parseInt(cols[7]) || 0; // col H: plazo en días
-      const inicio    = csvFecha(cols[8]);       // col I: fecha inicio
-      const termino   = csvFecha(cols[9]);       // col J: fecha término
-      // Avance programado: % de plazo calendario transcurrido
-      const avanceProg = (() => {
-        const fin = termino ? new Date(termino) : null;
-        const ini = inicio ? new Date(inicio)
-                  : (fin && plazo) ? new Date(fin.getTime() - plazo * 86400000)
-                  : null;
-        if (!ini) return 0;
-        const total = plazo || (fin ? Math.ceil((fin - ini) / 86400000) : 0);
-        if (total <= 0) return 0;
-        const elapsed = (new Date() - ini) / 86400000;
-        return Math.min(100, Math.max(0, Math.round(elapsed / total * 100)));
-      })();
+      const fact2023  = csvNum(cols[12]);          // col M
+      const fact2024  = csvNum(cols[13]);          // col N
+      const fact2025  = csvNum(cols[14]);          // col O
+      const fact2026  = csvNum(cols[15]);          // col P
+      const facturado = csvNum(cols[16]);          // col Q
+      const plazo     = parseInt(cols[7]) || 0;   // col H: plazo en días
+      const inicio    = csvFecha(cols[8]);         // col I: fecha inicio
+      const termino   = csvFecha(cols[9]);         // col J: fecha término
       const obj = {
         id:        parsed.length + 1,
         anio,
