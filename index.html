@@ -2188,20 +2188,27 @@ async function fetchProyectosCSV() {
       if (!rawCC) break;
       const cc     = rawCC;
       const nombre = CC_MAP[cc] || rawCC;
-      const avance  = csvPct(cols[10]);
-      const contrato = csvNum(cols[5]) * 1000000; // CSV almacena en MM$ (millones)
+      const avance    = csvPct(cols[10]);
+      const contrato  = csvNum(cols[6]) * 1000000; // col G: almacenado en MM$
       const facturado = csvNum(cols[15]);
       const fact2023  = csvNum(cols[11]);
       const fact2024  = csvNum(cols[12]);
       const fact2025  = csvNum(cols[13]);
       const fact2026  = csvNum(cols[14]);
-      const inicio  = csvFecha(cols[7]);
-      const plazo   = parseInt(cols[6]) || 0;
-      // Calcular avanceProg desde fechas (% de plazo transcurrido)
+      const plazo     = parseInt(cols[7]) || 0; // col H: plazo en días
+      const inicio    = csvFecha(cols[8]);       // col I: fecha inicio
+      const termino   = csvFecha(cols[9]);       // col J: fecha término
+      // Avance programado: % de plazo calendario transcurrido
       const avanceProg = (() => {
-        if (!inicio || !plazo) return 0;
-        const elapsed = (new Date() - new Date(inicio)) / 86400000;
-        return Math.min(100, Math.max(0, Math.round(elapsed / plazo * 100)));
+        const fin = termino ? new Date(termino) : null;
+        const ini = inicio ? new Date(inicio)
+                  : (fin && plazo) ? new Date(fin.getTime() - plazo * 86400000)
+                  : null;
+        if (!ini) return 0;
+        const total = plazo || (fin ? Math.ceil((fin - ini) / 86400000) : 0);
+        if (total <= 0) return 0;
+        const elapsed = (new Date() - ini) / 86400000;
+        return Math.min(100, Math.max(0, Math.round(elapsed / total * 100)));
       })();
       const obj = {
         id:        parsed.length + 1,
@@ -2219,7 +2226,7 @@ async function fetchProyectosCSV() {
         unidades:  csvNum(cols[4]),
         plazo,
         inicio,
-        termino:   csvFecha(cols[8]),
+        termino,
       };
       if (fact2023) obj.fact2023 = fact2023;
       if (fact2024) obj.fact2024 = fact2024;
