@@ -390,6 +390,7 @@
       <div class="kpi-grid" id="kpi-flujo"></div>
       <div class="chart-box" style="margin-bottom:22px">
         <h3>Facturación Proyectada desde Contratos (próximos 18 meses)</h3>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Saldo por facturar distribuido según curva S de avance (calibrada con el % avance real de cada proyecto), no en partes iguales por mes</div>
         <canvas id="chartFlujo" style="max-height:260px"></canvas>
       </div>
       <div class="chart-box" style="margin-bottom:22px">
@@ -1287,6 +1288,39 @@ const LIBRO_MAYOR_2026 = {
 // ══════════════════════════════════════════════════════
 // FLUJO PROYECTADO
 // ══════════════════════════════════════════════════════
+// Curva S de avance (smoothstep): 0 y 1 en los extremos, tramo central
+// más pronunciado — modela el ritmo típico de obra (lento-rápido-lento).
+function curvaS(t) {
+  t = Math.max(0, Math.min(1, t));
+  return t * t * (3 - 2 * t);
+}
+// Curva S acumulada en unidades de "mes de proyecto" (0..durTotal → 0..1).
+// El mes 1 no genera facturación (recién se factura desde el mes 2):
+// 0% acumulado al cierre del mes 1, 10% al cierre del mes 2, y desde ahí
+// una curva S normal hasta el 100% al término.
+function curvaSAcumulada(t, durTotal) {
+  t = Math.max(0, Math.min(durTotal, t));
+  if (durTotal <= 1) return curvaS(t / durTotal); // sin margen para retrasar el arranque
+  if (t <= 1) return 0;
+  if (durTotal <= 2) return curvaS(t - 1); // todo el saldo se factura en el único mes restante
+  if (t <= 2) return 0.10 * (t - 1);
+  return 0.10 + 0.90 * curvaS((t - 2) / (durTotal - 2));
+}
+// Inversa por bisección (monótona) — ubica el % avance real del proyecto
+// sobre la curva (en meses) para proyectar el resto del saldo siguiendo
+// esa misma forma, en vez de asumir que arranca la curva desde cero hoy.
+function curvaSAcumuladaInversa(y, durTotal) {
+  y = Math.max(0, Math.min(1, y));
+  let lo = 0, hi = durTotal;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (curvaSAcumulada(mid, durTotal) < y) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+function mesesEntre(a, b) {
+  return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+}
 function calcularFlujo() {
   const hoy = new Date(); hoy.setDate(1); hoy.setHours(0,0,0,0);
   const meses = [];
@@ -1297,20 +1331,36 @@ function calcularFlujo() {
   proyectos.filter(p => p.estado === 'activo').forEach(p => {
     const saldo = Math.max(0, p.contrato - p.facturado);
     if (saldo <= 0) return;
-    const inicioP = p.inicio && p.inicio !== '—' ? new Date(p.inicio) : hoy;
-    const terminoP = p.termino && p.termino !== '—' ? new Date(p.termino) : null;
-    if (!terminoP) return;
-    terminoP.setDate(1);
+    const inicioOriginal = p.inicio && p.inicio !== '—' ? new Date(p.inicio) : hoy;
+    const terminoOriginal = p.termino && p.termino !== '—' ? new Date(p.termino) : null;
+    if (!terminoOriginal) return;
+    const inicioP = inicioOriginal, terminoP = new Date(terminoOriginal); terminoP.setDate(1);
+    const inicioMes = new Date(inicioP.getFullYear(), inicioP.getMonth(), 1);
+    const terminoMes = new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
+    // La última factura se cobra un mes después del término de la obra
+    // (rezago de cierre/aprobación), así que el flujo se extiende un mes más.
+    const terminoFacturacion = new Date(terminoMes.getFullYear(), terminoMes.getMonth() + 1, 1);
     const mesesActivos = meses.filter(m => {
       const fm = new Date(m.year, m.month, 1);
-      return fm >= (inicioP < hoy ? hoy : new Date(inicioP.getFullYear(), inicioP.getMonth(), 1))
-          && fm <= new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
+      return fm >= (inicioP < hoy ? hoy : inicioMes) && fm <= terminoFacturacion;
     });
     if (!mesesActivos.length) return;
-    const porMes = saldo / mesesActivos.length;
-    mesesActivos.forEach(m => {
-      m.total += porMes;
-      m.proyectos.push({ nombre: p.nombre, monto: porMes });
+
+    const durTotal = Math.max(1, mesesEntre(inicioMes, terminoFacturacion) + 1);
+    const n = mesesActivos.length;
+    const tActual = curvaSAcumuladaInversa((p.avance || 0) / 100, durTotal);
+    let pesos = mesesActivos.map((m, j) => {
+      const t0 = tActual + (durTotal - tActual) * (j / n);
+      const t1 = tActual + (durTotal - tActual) * ((j + 1) / n);
+      return curvaSAcumulada(t1, durTotal) - curvaSAcumulada(t0, durTotal);
+    });
+    let sumaPesos = pesos.reduce((a, v) => a + v, 0);
+    if (sumaPesos <= 0) pesos = mesesActivos.map(() => 1 / n), sumaPesos = 1;
+
+    mesesActivos.forEach((m, i) => {
+      const monto = saldo * (pesos[i] / sumaPesos);
+      m.total += monto;
+      m.proyectos.push({ nombre: p.nombre, monto });
     });
   });
   return meses;
