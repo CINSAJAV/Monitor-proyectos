@@ -696,20 +696,28 @@ let proyectos = [
 // CONTROL DE COSTOS (datos extraídos de archivos de control)
 // ══════════════════════════════════════════════════════
 const CTRL_DATA = {
-  3:  { periodo:'Oct-24', costoPpto:206725190,  costoForecast:243810663 },
-  5:  { periodo:'Feb-26', costoForecast:229792700 },
-  6:  { periodo:'Garantía', costoPpto:39924228, costoForecast:32034495, resultadoPpto:13997500, resultadoForecast:22145528 },
-  7:  { periodo:'Dic-24', costoForecast:20557334, resultadoForecast:17731143 },
-  8:  { periodo:'Jul-25', costoPpto:83255203,   costoForecast:83871631 },
-  10: { periodo:'Sep-24', costoForecast:37791618 },
-  11: { periodo:'Sep-25', costoPpto:145153547,  costoForecast:129731968 },
-  12: { periodo:'Ene-25', costoPpto:67633521,   costoForecast:45154199 },
-  13: { periodo:'Mar-26', costoPpto:1843626495, resultadoPpto:517098905 },
-  15: { periodo:'Jun-26', costoPpto:1874739793, costoForecast:1976984924, resultadoPpto:723023808, resultadoForecast:600618668 },
-  16: { periodo:'Abr-26', costoForecast:43187390, resultadoForecast:-187390 },
-  18: { periodo:'Jul-25', costoPpto:60850419,   costoForecast:60485024 },
-  19: { periodo:'Mar-26', costoPpto:503568437,  costoForecast:713148930, resultadoPpto:449360677, resultadoForecast:239780184 },
-  21: { periodo:'May-26', costoPpto:413527987,  costoForecast:416838808, resultadoPpto:239811962, resultadoForecast:236501141 },
+  // Fuente: 07. Control de Proyectos Informes / 2026.06 Real Junio (Google Drive).
+  // Cada entrada = fila "TOTAL COSTOS" y "RESULTADO PROYECTO" de la hoja
+  // "Control Costos" del archivo de control de cada proyecto.
+  3:  { periodo:'Sep-25', costoPpto:204305983,   costoForecast:265987005,   resultadoPpto:51076495,  resultadoForecast:-15304085 },
+  5:  { periodo:'Jun-26', costoPpto:303237776,   costoForecast:265488789,   resultadoPpto:54470638,  resultadoForecast:92219625 },
+  6:  { periodo:'Feb-24', costoPpto:41992500,    costoForecast:33844472,    resultadoPpto:13997500,  resultadoForecast:22145528 },
+  7:  { periodo:'Jun-26', costoPpto:26979283,    costoForecast:21763873,    resultadoPpto:12515733,  resultadoForecast:17731143 },
+  8:  { periodo:'Jul-25', costoPpto:84893715,    costoForecast:87412533,    resultadoPpto:45106275,  resultadoForecast:42587457 },
+  10: { periodo:'Sep-24', costoPpto:39141867,    costoForecast:41273543,    resultadoPpto:11278297,  resultadoForecast:9146621 },
+  11: { periodo:'Sep-25', costoPpto:145153547,   costoForecast:137973521,   resultadoPpto:21773032,  resultadoForecast:28953058 },
+  12: { periodo:'Ene-25', costoPpto:72001017,    costoForecast:55390956,    resultadoPpto:17201916,  resultadoForecast:33811977 },
+  13: { periodo:'Jun-26', costoPpto:1843626495,  costoForecast:1567990337,  resultadoPpto:517098905, resultadoForecast:792735063 },
+  14: { periodo:'Jun-26', costoPpto:366287967,   costoForecast:515946063,   resultadoPpto:89558018,  resultadoForecast:-60100078 },
+  15: { periodo:'Nov-25', costoPpto:1916674209,  costoForecast:1948558322,  resultadoPpto:681089392, resultadoForecast:649205279 },
+  16: { periodo:'May-26', costoPpto:35026851,    costoForecast:43768309,    resultadoPpto:7973149,   resultadoForecast:-768309 },
+  18: { periodo:'Jul-25', costoPpto:62595223,    costoForecast:62429706,    resultadoPpto:19105545,  resultadoForecast:19271063 },
+  19: { periodo:'Jun-26', costoPpto:503568437,   costoForecast:705409219,   resultadoPpto:449360677, resultadoForecast:247519895 },
+  21: { periodo:'Jun-26', costoPpto:413827987,   costoForecast:430855681,   resultadoPpto:239511962, resultadoForecast:222484268 },
+  22: { periodo:'Jun-26', costoPpto:773611984,   costoForecast:807267654,   resultadoPpto:477814049, resultadoForecast:444158379 },
+  23: { periodo:'Jun-26', costoPpto:168211167,   costoForecast:168150847,   resultadoPpto:80709273,  resultadoForecast:80769593 },
+  24: { periodo:'Jun-26', costoPpto:130544874,   costoForecast:130544874,   resultadoPpto:84042966,  resultadoForecast:84042966 },
+  25: { periodo:'Jun-26', costoPpto:211399862,   costoForecast:206978420,   resultadoPpto:41102533,  resultadoForecast:45523975 },
 };
 
 // ══════════════════════════════════════════════════════
