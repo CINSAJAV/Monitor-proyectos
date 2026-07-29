@@ -1328,6 +1328,17 @@ function calcularFlujo() {
     const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
     meses.push({ year: d.getFullYear(), month: d.getMonth(), total: 0, proyectos: [] });
   }
+  // Proyectos ya ejecutados (100% avance) que aún tienen saldo por facturar:
+  // ya no hay obra en curso que siga una curva de avance, es facturación
+  // pendiente de cierre administrativo — se registra completa en agosto.
+  proyectos.filter(p => p.estado === 'completado').forEach(p => {
+    const saldo = Math.max(0, p.contrato - p.facturado);
+    if (saldo <= 0) return;
+    const mesDestino = meses[1];
+    if (!mesDestino) return;
+    mesDestino.total += saldo;
+    mesDestino.proyectos.push({ nombre: p.nombre, monto: saldo });
+  });
   proyectos.filter(p => p.estado === 'activo').forEach(p => {
     const saldo = Math.max(0, p.contrato - p.facturado);
     if (saldo <= 0) return;
@@ -1373,7 +1384,7 @@ function renderFlujoProyectado() {
   const valores = meses.map(m => m.total);
   const total12 = valores.slice(0, 12).reduce((a, v) => a + v, 0);
   const mesMax = meses.reduce((a, m) => m.total > a.total ? m : a, meses[0]);
-  const activos = proyectos.filter(p => p.estado === 'activo' && Math.max(0, p.contrato - p.facturado) > 0);
+  const activos = proyectos.filter(p => (p.estado === 'activo' || p.estado === 'completado') && Math.max(0, p.contrato - p.facturado) > 0);
 
   const roReal2025 = FLUJO_CAJA.meses.filter(d => d.m.startsWith('2025') && d.real).reduce((a,d) => a+d.ro, 0);
 
@@ -1511,7 +1522,10 @@ function renderFlujoProyectado() {
       const fin = new Date(terminoP.getFullYear(), terminoP.getMonth(), 1);
       while (desde <= fin) { mesesR++; desde.setMonth(desde.getMonth() + 1); }
     }
-    const promMes = mesesR > 0 ? saldo / mesesR : 0;
+    // Proyecto ya ejecutado (término ya pasado): el saldo se factura de una
+    // sola vez el próximo mes disponible, no queda "diluido" en 0 meses.
+    if (mesesR === 0) mesesR = 1;
+    const promMes = saldo / mesesR;
     return `<tr>
       <td><strong>${p.nombre}</strong><br><small style="color:var(--text-muted)">${p.ncontrato}</small></td>
       <td>${tipoTag(p.tipo)}</td>
