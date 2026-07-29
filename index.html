@@ -1162,59 +1162,69 @@ const CC_MAP = {
 const LIBRO_MAYOR_2023 = {
   // Fuente: Libro Mayor 2023 (ctas resultado).xlsx — sin cuentas de ingresos
   // registradas todavía (los primeros proyectos recién arrancaron en
-  // nov-dic 2023); los costos son compras de materiales para CC 000
-  // (Padre Hurtado) contabilizadas en inventario (cuentas 11-08-xxx), no
-  // en cuentas de resultado — se incluyen igual como costo directo de obra.
+  // nov-dic 2023). Costos = cuenta 41-xx + compras de materiales para
+  // CC 000 (Padre Hurtado) contabilizadas en inventario (11-08-xxx, no es
+  // cuenta de resultado pero se incluye como costo directo de obra).
+  // Gastos adm. = cuenta 42-xx. Cuenta 43-xx (corrección monetaria,
+  // intereses, impuesto renta) se excluye por no ser operacional.
   ingresos: [],
   costos: [
-    {mes:'2023-11',cc:'000',monto:659804842},
-    {mes:'2023-12',cc:'000',monto:28203000},
+    {mes:'2023-07',cc:'',monto:2564494},
+    {mes:'2023-08',cc:'',monto:5411349},
+    {mes:'2023-09',cc:'',monto:7766703},
+    {mes:'2023-10',cc:'',monto:7647131},
+    {mes:'2023-11',cc:'',monto:7647994},{mes:'2023-11',cc:'000',monto:659804842},
+    {mes:'2023-12',cc:'',monto:17154944},{mes:'2023-12',cc:'000',monto:28203000},
   ],
   gastosAdm: [
-    {mes:'2023-07',monto:2710815},
-    {mes:'2023-08',monto:6010835},
-    {mes:'2023-09',monto:10347660},
-    {mes:'2023-10',monto:8274313},
-    {mes:'2023-11',monto:16368864},
-    {mes:'2023-12',monto:18580283},
+    {mes:'2023-07',monto:146321},
+    {mes:'2023-08',monto:601190},
+    {mes:'2023-09',monto:2562460},
+    {mes:'2023-10',monto:632230},
+    {mes:'2023-11',monto:8724277},
+    {mes:'2023-12',monto:2569119},
   ],
 };
 
 const LIBRO_MAYOR_2024 = {
+  // Fuente: Libro Mayor 2024 (ctas resultado).xlsx — ingresos = cuenta
+  // 31/32-xx, costos directos = cuenta 41-xx, gastos adm. = cuenta 42-xx.
+  // Cuenta 43-xx (corrección monetaria, intereses, impuesto renta) se
+  // excluye por no ser operacional.
   ingresos: [
     {mes:'2024-01',cc:'',monto:10000},{mes:'2024-01',cc:'000',monto:-10000},
     {mes:'2024-03',cc:'000',monto:121600000},
     {mes:'2024-04',cc:'000',monto:76396662},{mes:'2024-04',cc:'00A',monto:127178131},
     {mes:'2024-05',cc:'000',monto:478823907},
-    {mes:'2024-06',cc:'000',monto:561022637},
+    {mes:'2024-06',cc:'',monto:1},{mes:'2024-06',cc:'000',monto:561022637},
     {mes:'2024-07',cc:'009',monto:13300767},{mes:'2024-07',cc:'00A',monto:81351102},
     {mes:'2024-08',cc:'009',monto:3146000},{mes:'2024-08',cc:'012',monto:127803844},
     {mes:'2024-09',cc:'006',monto:23698089},{mes:'2024-09',cc:'012',monto:96959000},
     {mes:'2024-10',cc:'000',monto:137105587},{mes:'2024-10',cc:'006',monto:79859336},{mes:'2024-10',cc:'007',monto:55990000},{mes:'2024-10',cc:'009',monto:19595798},{mes:'2024-10',cc:'010',monto:30332443},{mes:'2024-10',cc:'012',monto:171789775},
-    {mes:'2024-11',cc:'005',monto:46243054},{mes:'2024-11',cc:'007',monto:55990000},{mes:'2024-11',cc:'009',monto:43700958},{mes:'2024-11',cc:'012',monto:224527699},
+    {mes:'2024-11',cc:'',monto:34041},{mes:'2024-11',cc:'005',monto:46243054},{mes:'2024-11',cc:'007',monto:55990000},{mes:'2024-11',cc:'009',monto:43700958},{mes:'2024-11',cc:'012',monto:224527699},
     {mes:'2024-12',cc:'001',monto:27024400},{mes:'2024-12',cc:'008',monto:13249544},{mes:'2024-12',cc:'009',monto:6134218},{mes:'2024-12',cc:'010',monto:9162573},{mes:'2024-12',cc:'012',monto:85569640},
   ],
   costos: [
-    {mes:'2024-01',cc:'',monto:6988932},{mes:'2024-01',cc:'004',monto:2014313},
-    {mes:'2024-02',cc:'',monto:2173210},{mes:'2024-02',cc:'004',monto:6251435},
-    {mes:'2024-03',cc:'',monto:-20554385},{mes:'2024-03',cc:'000',monto:52436610},{mes:'2024-03',cc:'004',monto:3118878},
-    {mes:'2024-04',cc:'',monto:656484},{mes:'2024-04',cc:'000',monto:22022453},{mes:'2024-04',cc:'004',monto:8101125},{mes:'2024-04',cc:'00A',monto:2241357},
-    {mes:'2024-05',cc:'',monto:5188271},{mes:'2024-05',cc:'000',monto:56712687},{mes:'2024-05',cc:'001',monto:2086958},{mes:'2024-05',cc:'004',monto:8518068},
-    {mes:'2024-06',cc:'',monto:13455357},{mes:'2024-06',cc:'000',monto:89834446},{mes:'2024-06',cc:'001',monto:-1217262},{mes:'2024-06',cc:'004',monto:11820380},
-    {mes:'2024-07',cc:'',monto:11687317},{mes:'2024-07',cc:'000',monto:41772704},{mes:'2024-07',cc:'001',monto:442783},{mes:'2024-07',cc:'004',monto:14936166},
-    {mes:'2024-08',cc:'',monto:30483635},{mes:'2024-08',cc:'000',monto:570770},{mes:'2024-08',cc:'001',monto:1339130},{mes:'2024-08',cc:'002',monto:2300743},{mes:'2024-08',cc:'004',monto:15511131},{mes:'2024-08',cc:'008',monto:6138200},
-    {mes:'2024-09',cc:'',monto:31595105},{mes:'2024-09',cc:'000',monto:8086672},{mes:'2024-09',cc:'001',monto:377310},{mes:'2024-09',cc:'002',monto:5771295},{mes:'2024-09',cc:'004',monto:9869574},{mes:'2024-09',cc:'006',monto:7824168},{mes:'2024-09',cc:'007',monto:4278504},{mes:'2024-09',cc:'008',monto:40785374},
-    {mes:'2024-10',cc:'',monto:10706348},{mes:'2024-10',cc:'000',monto:584762},{mes:'2024-10',cc:'001',monto:27258968},{mes:'2024-10',cc:'003',monto:151657},{mes:'2024-10',cc:'004',monto:9582132},{mes:'2024-10',cc:'005',monto:5832058},{mes:'2024-10',cc:'006',monto:25987988},{mes:'2024-10',cc:'007',monto:1773802},{mes:'2024-10',cc:'008',monto:21147683},{mes:'2024-10',cc:'009',monto:17585698},{mes:'2024-10',cc:'010',monto:3183438},{mes:'2024-10',cc:'011',monto:221924},
-    {mes:'2024-11',cc:'',monto:12578267},{mes:'2024-11',cc:'001',monto:4832072},{mes:'2024-11',cc:'002',monto:28175400},{mes:'2024-11',cc:'003',monto:25361087},{mes:'2024-11',cc:'004',monto:20231364},{mes:'2024-11',cc:'006',monto:3547808},{mes:'2024-11',cc:'007',monto:-637961},{mes:'2024-11',cc:'008',monto:28050006},{mes:'2024-11',cc:'009',monto:2017866},{mes:'2024-11',cc:'011',monto:40915777},{mes:'2024-11',cc:'012',monto:33250100},{mes:'2024-11',cc:'013',monto:19200},
-    {mes:'2024-12',cc:'',monto:1166904476},{mes:'2024-12',cc:'001',monto:4491639},{mes:'2024-12',cc:'002',monto:49999761},{mes:'2024-12',cc:'003',monto:26977367},{mes:'2024-12',cc:'004',monto:315661348},{mes:'2024-12',cc:'005',monto:1267154},{mes:'2024-12',cc:'006',monto:7019640},{mes:'2024-12',cc:'007',monto:20072810},{mes:'2024-12',cc:'008',monto:55311011},{mes:'2024-12',cc:'009',monto:-680941},{mes:'2024-12',cc:'012',monto:136779972},{mes:'2024-12',cc:'015',monto:34649370},
+    {mes:'2024-01',cc:'004',monto:17251071},
+    {mes:'2024-02',cc:'000',monto:2238050},{mes:'2024-02',cc:'004',monto:18827415},
+    {mes:'2024-03',cc:'000',monto:52732470},{mes:'2024-03',cc:'004',monto:18937938},
+    {mes:'2024-04',cc:'000',monto:20759669},{mes:'2024-04',cc:'004',monto:19106850},
+    {mes:'2024-05',cc:'',monto:3850436},{mes:'2024-05',cc:'000',monto:56712687},{mes:'2024-05',cc:'004',monto:22036222},
+    {mes:'2024-06',cc:'',monto:1287535},{mes:'2024-06',cc:'000',monto:89200223},{mes:'2024-06',cc:'004',monto:22982020},
+    {mes:'2024-07',cc:'',monto:5616165},{mes:'2024-07',cc:'000',monto:41735504},{mes:'2024-07',cc:'004',monto:19379016},
+    {mes:'2024-08',cc:'',monto:19715091},{mes:'2024-08',cc:'000',monto:570770},{mes:'2024-08',cc:'002',monto:2232743},{mes:'2024-08',cc:'004',monto:26542977},{mes:'2024-08',cc:'008',monto:6138200},
+    {mes:'2024-09',cc:'',monto:18115966},{mes:'2024-09',cc:'000',monto:8085948},{mes:'2024-09',cc:'001',monto:377310},{mes:'2024-09',cc:'002',monto:5771295},{mes:'2024-09',cc:'004',monto:30222716},{mes:'2024-09',cc:'006',monto:7824168},{mes:'2024-09',cc:'007',monto:4278504},{mes:'2024-09',cc:'008',monto:46585374},
+    {mes:'2024-10',cc:'',monto:5580865},{mes:'2024-10',cc:'000',monto:584762},{mes:'2024-10',cc:'001',monto:17674088},{mes:'2024-10',cc:'003',monto:151657},{mes:'2024-10',cc:'004',monto:36294955},{mes:'2024-10',cc:'005',monto:5832058},{mes:'2024-10',cc:'006',monto:34749188},{mes:'2024-10',cc:'007',monto:1773802},{mes:'2024-10',cc:'008',monto:21971363},{mes:'2024-10',cc:'009',monto:17585698},{mes:'2024-10',cc:'010',monto:3183438},{mes:'2024-10',cc:'011',monto:221924},
+    {mes:'2024-11',cc:'',monto:5938153},{mes:'2024-11',cc:'001',monto:4832072},{mes:'2024-11',cc:'002',monto:28175400},{mes:'2024-11',cc:'003',monto:25361087},{mes:'2024-11',cc:'004',monto:35625396},{mes:'2024-11',cc:'006',monto:3547808},{mes:'2024-11',cc:'007',monto:-637961},{mes:'2024-11',cc:'008',monto:28050006},{mes:'2024-11',cc:'009',monto:2017866},{mes:'2024-11',cc:'011',monto:40915777},{mes:'2024-11',cc:'012',monto:33250100},{mes:'2024-11',cc:'013',monto:19200},
+    {mes:'2024-12',cc:'',monto:1134535595},{mes:'2024-12',cc:'001',monto:4491639},{mes:'2024-12',cc:'002',monto:49999761},{mes:'2024-12',cc:'003',monto:26977367},{mes:'2024-12',cc:'004',monto:-258614330},{mes:'2024-12',cc:'005',monto:1267154},{mes:'2024-12',cc:'006',monto:7019640},{mes:'2024-12',cc:'007',monto:20072810},{mes:'2024-12',cc:'008',monto:55311011},{mes:'2024-12',cc:'009',monto:-680941},{mes:'2024-12',cc:'012',monto:136779972},{mes:'2024-12',cc:'015',monto:34649370},
   ],
   gastosAdm: [
-    {mes:'2024-01',monto:20052247},{mes:'2024-02',monto:28755438},
-    {mes:'2024-03',monto:23240403},{mes:'2024-04',monto:30686870},
-    {mes:'2024-05',monto:33695819},{mes:'2024-06',monto:34605820},
-    {mes:'2024-07',monto:36824761},{mes:'2024-08',monto:41064998},
-    {mes:'2024-09',monto:39860594},{mes:'2024-10',monto:43373866},
-    {mes:'2024-11',monto:58296574},{mes:'2024-12',monto:66577141},
+    {mes:'2024-01',monto:2801176},{mes:'2024-02',monto:8630306},
+    {mes:'2024-03',monto:4398459},{mes:'2024-04',monto:11580020},
+    {mes:'2024-05',monto:11677129},{mes:'2024-06',monto:12020764},
+    {mes:'2024-07',monto:17463470},{mes:'2024-08',monto:19932313},
+    {mes:'2024-09',monto:12057685},{mes:'2024-10',monto:9449376},
+    {mes:'2024-11',monto:23442683},{mes:'2024-12',monto:345026558},
   ],
 };
 
