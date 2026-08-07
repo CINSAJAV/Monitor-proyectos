@@ -676,7 +676,7 @@ let proyectos = [
   { id:10, cc:'017', anio:2024, ncontrato:'4290-29-LE24', nombre:'Limache', tipo:'camara', estado:'completado', ubicacion:'Limache', contrato:50420164, facturado:50420164, avance:100, inicio:'13-08-2024', termino:'19-11-2024', plazo:98 },
   { id:11, cc:'006', anio:2024, ncontrato:'2392-9-LQ24', nombre:'Pedro Aguirre Cerda', tipo:'luminaria', estado:'completado', ubicacion:'Pedro Aguirre Cerda', contrato:166926579, facturado:166926579, avance:100, inicio:'18-07-2024', termino:'16-10-2024', plazo:90 },
   { id:12, cc:'009', anio:2024, ncontrato:'Privado', nombre:'SAR La Reina', tipo:'camara', estado:'completado', ubicacion:'SAR La Reina', contrato:89202933, facturado:89202933, avance:100, inicio:'04-07-2024', termino:'26-11-2024', plazo:145 },
-  { id:13, cc:'011', anio:2025, ncontrato:'2430-32-LR24', nombre:'Antofagasta', tipo:'camara', estado:'completado', ubicacion:'Antofagasta', contrato:2360725400, facturado:1350072063, avance:100, inicio:'21-07-2025', termino:'04-05-2026', plazo:287 },
+  { id:13, cc:'011', anio:2025, ncontrato:'2430-32-LR24', nombre:'Antofagasta', tipo:'camara', estado:'completado', ubicacion:'Antofagasta', contrato:2360725400, facturado:1350072063, fact2025:684511200, fact2026:665560863, avance:100, inicio:'21-07-2025', termino:'04-05-2026', plazo:287 },
   { id:14, cc:'013', anio:2024, ncontrato:'2490-70-LR24', nombre:'Providencia', tipo:'camara', estado:'completado', ubicacion:'Providencia', contrato:479800000, facturado:381015965, avance:100, inicio:'17-03-2025', termino:'21-01-2026', plazo:310 },
   { id:15, cc:'014', anio:2024, ncontrato:'4160-23-LR24', nombre:'Hualpen', tipo:'luminaria', estado:'completado', ubicacion:'Hualpen', contrato:2597763601, facturado:2597763601, avance:100, inicio:'01-04-2025', termino:'10-08-2025', plazo:131 },
   { id:16, cc:'016', anio:2024, ncontrato:'2490-87-LE24', nombre:'Providencia II', tipo:'camara', estado:'completado', ubicacion:'Providencia II', contrato:43000000, facturado:43000000, avance:100, inicio:'14-04-2025', termino:'21-07-2025', plazo:98 },
@@ -1278,7 +1278,7 @@ const LIBRO_MAYOR_2025 = {
 };
 
 const LIBRO_MAYOR_2026 = {
-  // Fuente: Libro Mayor 2026 (ctas resultado) Real Junio.xlsx — 01/01/2026-30/06/2026.
+  // Fuente: Libro Mayor 2026 (ctas resultado) Real Julio.xlsx — 01/01/2026-31/07/2026.
   // Misma regla que 2023-2025: ingresos = cuenta 31/32-xx, costos directos
   // = cuenta 41-xx, gastos adm. = cuenta 42-xx, 43-xx excluida por no ser
   // operacional.
@@ -1289,6 +1289,7 @@ const LIBRO_MAYOR_2026 = {
     {mes:'2026-04',cc:'',monto:4275067},{mes:'2026-04',cc:'019',monto:53080952},
     {mes:'2026-05',cc:'',monto:1495260},{mes:'2026-05',cc:'016',monto:8974117},{mes:'2026-05',cc:'019',monto:64539103},
     {mes:'2026-06',cc:'',monto:533823},{mes:'2026-06',cc:'019',monto:145606101},
+    {mes:'2026-07',cc:'011',monto:665560863},
   ],
   costos: [
     {mes:'2026-01',cc:'',monto:61852247},{mes:'2026-01',cc:'002',monto:2709680},{mes:'2026-01',cc:'004',monto:54672200},{mes:'2026-01',cc:'011',monto:330523917},{mes:'2026-01',cc:'013',monto:157947504},{mes:'2026-01',cc:'019',monto:306133910},
@@ -1297,11 +1298,13 @@ const LIBRO_MAYOR_2026 = {
     {mes:'2026-04',cc:'',monto:75300209},{mes:'2026-04',cc:'004',monto:655142},{mes:'2026-04',cc:'006',monto:295607},{mes:'2026-04',cc:'008',monto:2590250},{mes:'2026-04',cc:'011',monto:15170105},{mes:'2026-04',cc:'013',monto:356992},{mes:'2026-04',cc:'019',monto:74595881},{mes:'2026-04',cc:'020',monto:3550790},
     {mes:'2026-05',cc:'',monto:65416049},{mes:'2026-05',cc:'002',monto:18096726},{mes:'2026-05',cc:'007',monto:169000},{mes:'2026-05',cc:'011',monto:11516842},{mes:'2026-05',cc:'016',monto:5343408},{mes:'2026-05',cc:'019',monto:55417159},{mes:'2026-05',cc:'020',monto:8664577},{mes:'2026-05',cc:'021',monto:151850},{mes:'2026-05',cc:'022',monto:3030887},{mes:'2026-05',cc:'023',monto:583643},{mes:'2026-05',cc:'024',monto:542879},
     {mes:'2026-06',cc:'',monto:68382036},{mes:'2026-06',cc:'002',monto:307300},{mes:'2026-06',cc:'004',monto:3932659},{mes:'2026-06',cc:'007',monto:140000},{mes:'2026-06',cc:'011',monto:11472061},{mes:'2026-06',cc:'013',monto:383124},{mes:'2026-06',cc:'019',monto:23048747},{mes:'2026-06',cc:'020',monto:50336027},{mes:'2026-06',cc:'021',monto:60677},{mes:'2026-06',cc:'025',monto:158680391},
+    {mes:'2026-07',cc:'002',monto:2522489},{mes:'2026-07',cc:'004',monto:15468711},{mes:'2026-07',cc:'011',monto:8512791},{mes:'2026-07',cc:'013',monto:539560},{mes:'2026-07',cc:'019',monto:11699974},{mes:'2026-07',cc:'020',monto:13499956},
   ],
   gastosAdm: [
     {mes:'2026-01',monto:21870085},{mes:'2026-02',monto:21579599},
     {mes:'2026-03',monto:22699494},{mes:'2026-04',monto:43947280},
     {mes:'2026-05',monto:20783503},{mes:'2026-06',monto:27209931},
+    {mes:'2026-07',monto:19938718},
   ],
 };
 
@@ -1598,7 +1601,7 @@ function renderResumen() {
   document.getElementById('resumen-anual-cards').innerHTML =
     yrCard('2024 — Año completo', t24, '10 meses facturados') +
     yrCard('2025 — Año completo', t25, 'Ene – Dic 2025') +
-    yrCard('2026 — Acumulado YTD', t26, 'Ene – May 2026');
+    yrCard('2026 — Acumulado YTD', t26, 'Ene – Jul 2026');
 
   // ── Gráfico comparativo ──────────────────────────────
   if (chartResumen) chartResumen.destroy();
