@@ -1,15 +1,19 @@
 """
 CINSA - Actualizador de datos de Licitaciones (Monitor de Proyectos)
-Lee la copia local cacheada (CSV) de la pestaña "Listado licitaciones" del
+Lee la copia local cacheada (CSV) de la pestaña "Listado Licitaciones" del
 Google Sheet "Dashboard Proyectos" (descargada por separado antes de correr
 este script, igual que "Dashboard Proyectos (cache).csv" para Proyectos),
 recalcula KPIs / evolucion por anio / rubro / ranking de competidores
 (incluyendo el puesto de CINSA), y reemplaza el bloque `const LIC = {...};`
 dentro de index.html.
 
-Columnas esperadas en el CSV (fila 1 = titulo, fila 2 = encabezados, datos
-desde fila 3): Nombre, Fecha Publicacion, Resultado CINSA, Presupuesto Bruto,
-Monto Neto Adjudicado, Empresa Adjudicada, Tipo.
+La hoja tiene las mismas columnas que la planilla original "Listado
+Licitaciones a Postular Mercado Publico CINSA" (Nro, Nombre, Descripcion,
+Demandante, Fecha de Publicacion Licitacion, ..., Resultado CINSA,
+Presupuesto Bruto, ..., Monto Neto adjudicado, Empresa adjudicada, ...,
+Tipo, ...). Las columnas se detectan por NOMBRE de encabezado (no por
+posicion fija), asi que el orden/columnas extra no importan mientras los
+titulos coincidan.
 
 No toca nada mas del archivo. El commit/push lo hace actualizar-licitaciones.ps1.
 """
@@ -24,11 +28,27 @@ CSV_PATH = r"C:\Users\tira1\Listado Licitaciones (cache).csv"
 HTML_PATH = r"C:\Users\tira1\index.html"
 YEARS = [2023, 2024, 2025, 2026]
 RUBROS = ["Luminaria", "Televigilancia", "Luminaria Solar", "Postes Inteligentes"]
-CSV_COLUMNS = ["Nombre", "FechaPub", "ResultadoCINSA", "PresupuestoBruto", "MontoNetoAdj", "EmpresaAdj", "Tipo"]
+
+# encabezado normalizado (sin tildes, minusculas, espacios colapsados) -> nombre interno
+HEADER_MATCH = {
+    "nombre de la adquisicion": "Nombre",
+    "fecha de publicacion licitacion": "FechaPub",
+    "resultado cinsa": "ResultadoCINSA",
+    "presupuesto bruto": "PresupuestoBruto",
+    "monto neto adjudicado": "MontoNetoAdj",
+    "empresa adjudicada": "EmpresaAdj",
+    "tipo": "Tipo",
+}
+MIN_FILAS_ESPERADAS = 400  # aviso si el CSV trae muchas menos (posible filtro activo)
 
 
 def strip_accents(s):
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+
+
+def norm_header(s):
+    s = strip_accents(str(s)).strip().lower()
+    return re.sub(r"\s+", " ", s)
 
 
 def build_ranking(subset):
@@ -57,14 +77,52 @@ def build_ranking(subset):
     return to_list(by_n), to_list(by_monto)
 
 
+def cargar_csv(path):
+    """Busca la fila de encabezados por nombre (contiene 'Resultado CINSA'),
+    mapea las columnas necesarias por texto de encabezado (sin importar el
+    orden ni columnas extra), y devuelve un DataFrame con esas 7 columnas."""
+    raw = pd.read_csv(path, header=None, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+
+    header_row_idx = None
+    for i in range(min(10, len(raw))):
+        cells = [norm_header(c) for c in raw.iloc[i]]
+        if "resultado cinsa" in cells:
+            header_row_idx = i
+            break
+    if header_row_idx is None:
+        print("ERROR: no se encontro una fila de encabezados con 'Resultado CINSA' en las primeras 10 filas del CSV.")
+        print("Verifica que copiaste los encabezados originales (misma fila que 'Resultado CINSA', 'Tipo', etc.).")
+        sys.exit(1)
+
+    headers = [norm_header(c) for c in raw.iloc[header_row_idx]]
+    col_idx = {}
+    for pos, h in enumerate(headers):
+        if h in HEADER_MATCH and HEADER_MATCH[h] not in col_idx:
+            col_idx[HEADER_MATCH[h]] = pos
+
+    faltantes = [v for v in HEADER_MATCH.values() if v not in col_idx]
+    if faltantes:
+        print(f"ERROR: no encontre estas columnas en el encabezado: {faltantes}")
+        print("Encabezados detectados:", [h for h in headers if h])
+        sys.exit(1)
+
+    data = raw.iloc[header_row_idx + 1:].reset_index(drop=True)
+    df = pd.DataFrame({name: data.iloc[:, pos] for name, pos in col_idx.items()})
+
+    if len(df) < MIN_FILAS_ESPERADAS:
+        print(f"AVISO: el CSV solo trae {len(df)} filas de datos (se esperaban ~500+).")
+        print("Revisa que no haya un filtro o una vista de filtro activa en Google Sheets antes de exportar.")
+
+    return df
+
+
 def main():
     if not os.path.exists(CSV_PATH):
         print(f"ERROR: no se encontro el CSV en {CSV_PATH}")
-        print("Descarga la pestana 'Listado licitaciones' de Dashboard Proyectos como CSV a esa ruta antes de correr este script.")
+        print("Descarga la pestana 'Listado Licitaciones' de Dashboard Proyectos como CSV a esa ruta antes de correr este script.")
         sys.exit(1)
 
-    raw = pd.read_csv(CSV_PATH, skiprows=2, header=None, names=CSV_COLUMNS, encoding="utf-8-sig",
-                       dtype=str, keep_default_na=False)
+    raw = cargar_csv(CSV_PATH)
 
     # cortar en la primera fila sin nombre (o fila de totales, por si se pega de mas)
     nombre_stripped = raw["Nombre"].str.strip()
@@ -79,8 +137,10 @@ def main():
     df["PresupuestoBruto"] = limpiar_monto(df["PresupuestoBruto"])
     df["MontoNetoAdj"] = limpiar_monto(df["MontoNetoAdj"])
 
-    # el export de Google Sheets entrega las fechas como M/D/YYYY
-    df["FechaPub"] = pd.to_datetime(df["FechaPub"], format="%m/%d/%Y", errors="coerce")
+    # el export de Google Sheets puede traer fecha+hora y año de 2 o 4 digitos
+    # (ej. "6/28/23 13:19" o "6/28/2023"); format='mixed' evita el fallback
+    # lento a dateutil fila por fila.
+    df["FechaPub"] = pd.to_datetime(df["FechaPub"], errors="coerce", format="mixed")
     df["Anio"] = df["FechaPub"].dt.year
     df = df[df["Anio"].between(2023, 2026)].copy()
 
