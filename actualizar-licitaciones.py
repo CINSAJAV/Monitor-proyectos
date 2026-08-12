@@ -17,6 +17,8 @@ titulos coincidan.
 
 No toca nada mas del archivo. El commit/push lo hace actualizar-licitaciones.ps1.
 """
+import csv
+import io
 import json
 import os
 import re
@@ -77,24 +79,84 @@ def build_ranking(subset):
     return to_list(by_n), to_list(by_monto)
 
 
+def reparar_fila(campos, n_cols_minimo):
+    """Si la fila llego comprimida entera en una sola celda (con comas
+    literales adentro, envuelta en comillas y ';;;;;;;;' colgando al final),
+    la vuelve a separar. Devuelve None si no se pudo llegar a las columnas
+    minimas necesarias con confianza."""
+    if len(campos) <= 2 and "," in campos[0]:
+        limpio = campos[0].rstrip(";")
+        try:
+            campos = next(csv.reader(io.StringIO(limpio)))
+        except csv.Error:
+            return None
+    if len(campos) < n_cols_minimo:
+        return None
+    return campos
+
+
+NRO_PATTERN = re.compile(r"^\d{1,7}-\d{1,6}-[A-Z]{2}\d{2}$")
+
+
+def dividir_bloque_fusionado(campos, n_cols_header, n_cols_minimo):
+    """Cuando una comilla suelta deja una fila pegada con la(s) siguiente(s),
+    busca dentro del bloque los puntos donde reaparece un Nro de licitacion
+    (patron '1234-56-LQ24') y recupera cada tramo posterior como su propio
+    registro. El primer tramo (el que arrastra la comilla rota) casi siempre
+    tiene sus propios numeros mal cortados, asi que se descarta -- solo esa
+    licitacion puntual sigue perdida, pero las que quedaron atrapadas detras
+    se recuperan bien."""
+    limites = []
+    for i, v in enumerate(campos):
+        if i == 0:
+            continue
+        limpio = re.sub(r"^[;\s]+", "", v).strip()
+        if NRO_PATTERN.match(limpio):
+            campos[i] = limpio
+            limites.append(i)
+    limites.append(len(campos))
+
+    recuperadas = []
+    for start, end in zip(limites, limites[1:]):
+        segmento = campos[start:end]
+        if len(segmento) < n_cols_minimo:
+            continue
+        if len(segmento) < n_cols_header:
+            segmento = segmento + [""] * (n_cols_header - len(segmento))
+        else:
+            segmento = segmento[:n_cols_header]
+        recuperadas.append(segmento)
+    return recuperadas
+
+
 def cargar_csv(path):
     """Busca la fila de encabezados por nombre (contiene 'Resultado CINSA'),
     mapea las columnas necesarias por texto de encabezado (sin importar el
-    orden ni columnas extra), y devuelve un DataFrame con esas 7 columnas."""
-    raw = pd.read_csv(path, header=None, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    orden ni columnas extra), y devuelve un DataFrame con esas 7 columnas.
+
+    El csv.reader de todo el archivo respeta campos entre comillas que abarcan
+    varias lineas fisicas (descripciones largas), a diferencia de leer linea
+    por linea. Algunas filas traen una comilla suelta sin cerrar mas adelante
+    (en columnas que no usamos, como "Experiencia"), lo que corta esa fila
+    antes de tiempo pero SIN fusionarla con la siguiente -- como todas las
+    columnas que necesitamos vienen antes de ese punto, igual se recuperan
+    bien mientras la fila tenga al menos las columnas minimas requeridas."""
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        todas_filas = list(csv.reader(f))
 
     header_row_idx = None
-    for i in range(min(10, len(raw))):
-        cells = [norm_header(c) for c in raw.iloc[i]]
-        if "resultado cinsa" in cells:
+    headers = None
+    for i, celdas in enumerate(todas_filas[:10]):
+        celdas_norm = [norm_header(c) for c in celdas]
+        if "resultado cinsa" in celdas_norm:
             header_row_idx = i
+            headers = celdas_norm
             break
     if header_row_idx is None:
         print("ERROR: no se encontro una fila de encabezados con 'Resultado CINSA' en las primeras 10 filas del CSV.")
         print("Verifica que copiaste los encabezados originales (misma fila que 'Resultado CINSA', 'Tipo', etc.).")
         sys.exit(1)
 
-    headers = [norm_header(c) for c in raw.iloc[header_row_idx]]
     col_idx = {}
     for pos, h in enumerate(headers):
         if h in HEADER_MATCH and HEADER_MATCH[h] not in col_idx:
@@ -106,7 +168,36 @@ def cargar_csv(path):
         print("Encabezados detectados:", [h for h in headers if h])
         sys.exit(1)
 
-    data = raw.iloc[header_row_idx + 1:].reset_index(drop=True)
+    n_cols_header = len(headers)
+    n_cols_minimo = max(col_idx.values()) + 1  # solo necesitamos llegar hasta la columna util mas lejana
+    filas, descartadas, recuperadas_de_bloques = [], 0, 0
+    for campos_orig in todas_filas[header_row_idx + 1:]:
+        if not any(c.strip() for c in campos_orig):
+            continue
+        campos = reparar_fila(list(campos_orig), n_cols_minimo)
+        if campos is not None and len(campos) <= n_cols_header + 30:
+            if len(campos) < n_cols_header:
+                campos = campos + [""] * (n_cols_header - len(campos))
+            else:
+                campos = campos[:n_cols_header]
+            filas.append(campos)
+            continue
+
+        # fila rota o fusionada con otras: intentar recuperar los registros
+        # atrapados detras del punto de quiebre buscando el siguiente Nro.
+        base = campos if campos is not None else campos_orig
+        recuperadas = dividir_bloque_fusionado(list(base), n_cols_header, n_cols_minimo)
+        if recuperadas:
+            filas.extend(recuperadas)
+            recuperadas_de_bloques += len(recuperadas)
+        descartadas += 1
+
+    if descartadas:
+        extra = f" (se recuperaron {recuperadas_de_bloques} licitacion(es) que venian atrapadas detras del quiebre)" if recuperadas_de_bloques else ""
+        print(f"AVISO: {descartadas} fila(s) del CSV traian comillas internas mal cerradas{extra}. "
+              f"La licitacion exactamente en el punto de quiebre se pierde -- revisala en Google Sheets si te importa incluirla.")
+
+    data = pd.DataFrame(filas)
     df = pd.DataFrame({name: data.iloc[:, pos] for name, pos in col_idx.items()})
 
     if len(df) < MIN_FILAS_ESPERADAS:
@@ -124,11 +215,10 @@ def main():
 
     raw = cargar_csv(CSV_PATH)
 
-    # cortar en la primera fila sin nombre (o fila de totales, por si se pega de mas)
+    # descartar filas sin nombre (vacias o de totales), esten donde esten
     nombre_stripped = raw["Nombre"].str.strip()
-    stop_mask = nombre_stripped.eq("") | nombre_stripped.isin(["Total Neto", "Total Bruto"])
-    stop_idx = stop_mask.idxmax() if stop_mask.any() else len(raw)
-    df = raw.iloc[:stop_idx].copy() if stop_mask.any() else raw.copy()
+    descartar = nombre_stripped.eq("") | nombre_stripped.isin(["Total Neto", "Total Bruto"])
+    df = raw[~descartar].copy()
 
     def limpiar_monto(s):
         s = s.astype(str).str.replace(r"[\.\$\s,]", "", regex=True)
