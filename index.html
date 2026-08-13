@@ -2563,6 +2563,12 @@ const LIC_HEADER_MATCH = {
   'empresa adjudicada': 'EmpresaAdj',
   'tipo': 'Tipo',
 };
+// columna opcional: si existe y trae un año, ese año manda por sobre la
+// fecha de publicacion para las licitaciones que CINSA se adjudico (una
+// licitacion publicada en un año puede adjudicarse recien al año siguiente).
+const LIC_HEADER_MATCH_OPCIONAL = {
+  'ano adjudicacion': 'AnioAdjudicacion',
+};
 const LIC_YEARS = [2023, 2024, 2025, 2026];
 const LIC_NRO_PATTERN = /^\d{1,7}-\d{1,6}-[A-Z]{2}\d{2}$/;
 
@@ -2668,6 +2674,15 @@ function licCargarCSV(text) {
   const faltantes = Object.values(LIC_HEADER_MATCH).filter(k => !(k in colIdx));
   if (faltantes.length) return null;
 
+  // columna(s) opcional(es): se extraen si estan, pero NO cuentan para el
+  // minimo de columnas exigido (para no descartar filas por su culpa).
+  const colIdxOpcional = {};
+  headers.forEach((h, pos) => {
+    if (LIC_HEADER_MATCH_OPCIONAL[h] && !(LIC_HEADER_MATCH_OPCIONAL[h] in colIdxOpcional)) {
+      colIdxOpcional[LIC_HEADER_MATCH_OPCIONAL[h]] = pos;
+    }
+  });
+
   const nColsHeader = headers.length;
   const nColsMinimo = Math.max(...Object.values(colIdx)) + 1;
   const filas = [];
@@ -2693,6 +2708,7 @@ function licCargarCSV(text) {
     MontoNetoAdj: campos[colIdx.MontoNetoAdj] || '',
     EmpresaAdj: campos[colIdx.EmpresaAdj] || '',
     Tipo: campos[colIdx.Tipo] || '',
+    AnioAdjudicacion: (colIdxOpcional.AnioAdjudicacion !== undefined ? campos[colIdxOpcional.AnioAdjudicacion] : '') || '',
   }));
 }
 
@@ -2740,8 +2756,14 @@ function licComputeAll(rawRows) {
     if (tipo === 'Luminaria solar/ Televigilancia') tipo = 'Luminaria/Televigilancia';
     let empresa = (r.EmpresaAdj || '').trim().replace(/\s+/g, ' ').trim();
     if (!empresa) empresa = null;
+    // el año de adjudicación real (cuando esta cargado) manda por sobre el
+    // año de publicación -- una licitación puede publicarse un año y
+    // adjudicarse recién el siguiente.
+    let anio = fecha ? fecha.year : null;
+    const anioAdj = parseInt((r.AnioAdjudicacion || '').trim(), 10);
+    if (!isNaN(anioAdj) && anioAdj >= 2023 && anioAdj <= 2026) anio = anioAdj;
     return {
-      anio: fecha ? fecha.year : null,
+      anio,
       resultado, tipo, empresa,
       presupuesto: licCsvNum(r.PresupuestoBruto),
       montoNeto: licCsvNum(r.MontoNetoAdj),
