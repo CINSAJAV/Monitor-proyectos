@@ -538,7 +538,7 @@
         </div>
       </div>
       <p style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">
-        Ranking de licitaciones resueltas en que CINSA ofertó, incluyendo a CINSA como una empresa más
+        Ranking de todas las licitaciones adjudicadas (haya o no ofertado CINSA), incluyendo a CINSA como una empresa más
         (<span style="color:var(--accent-blue);font-weight:700">destacada</span>).
       </p>
       <div class="chart-box" style="margin-bottom:22px">
@@ -555,9 +555,11 @@
       <div class="charts-row lic-2col" id="lic-year-grid"></div>
 
       <p style="font-size:11px;color:var(--text-muted);margin-top:18px;line-height:1.6">
-        <strong>Fuente:</strong> Listado Licitaciones a Postular Mercado Público CINSA. Universo: licitaciones con fecha de
-        publicación 2023–2026 en que CINSA presentó oferta. El puesto de CINSA se muestra aunque no tenga adjudicaciones en el
-        segmento (último lugar). 2026 está incompleto (datos a la fecha de corte del archivo).
+        <strong>Fuente:</strong> Listado Licitaciones a Postular Mercado Público CINSA, 2023–2026. Los KPIs y el desempeño por
+        rubro consideran solo licitaciones en que CINSA ofertó. Los rankings de competidores consideran <em>todas</em> las
+        licitaciones adjudicadas del período (haya o no ofertado CINSA), clasificadas por año de adjudicación real cuando está
+        disponible (si no, por año de publicación). El puesto de CINSA se muestra aunque no tenga adjudicaciones en el segmento
+        (último lugar). 2026 está incompleto (datos a la fecha de corte del archivo).
       </p>
     </div>
 
@@ -2790,7 +2792,10 @@ function licComputeAll(rawRows) {
   });
 
   const participamos = rows.filter(r => r.resultado !== 'No Ofertada' && r.resultado !== 'Sin dato');
-  const decididas = participamos.filter(r => r.winner);
+  // "decididas" (usada para los rankings de competidores) incluye TODAS las
+  // licitaciones adjudicadas del rubro, haya o no ofertado CINSA -- muestra
+  // quién domina el mercado en general, no solo contra quién competimos.
+  const decididas = rows.filter(r => r.winner);
   const ganamos = rows.filter(r => r.resultado === 'Adjudicada');
 
   const kpi = {
