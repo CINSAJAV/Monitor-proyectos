@@ -2849,10 +2849,7 @@ function licComputeAll(rawRows) {
     const anioAdjTxt = (r.AnioAdjudicacion || '').trim();
     const anioAdj = parseInt(anioAdjTxt, 10);
     if (!isNaN(anioAdj) && anioAdj >= 2023 && anioAdj <= 2026) anio = anioAdj;
-    // la columna "Año adjudicación" a veces se reutiliza para anotar una
-    // fecha de cierre reprogramada (Mercado Público posterga el cierre); si
-    // su contenido parsea como fecha, esa fecha manda sobre "Fecha de cierre".
-    const fechaCierre = licParseFechaHora(anioAdjTxt) || licParseFechaHora(r.FechaCierre);
+    const fechaCierre = licParseFechaHora(r.FechaCierre);
     return {
       anio,
       resultado, tipo, empresa,
