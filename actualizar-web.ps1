@@ -1,10 +1,12 @@
 ﻿# ============================================================
 # CINSA - Actualizador automático de Monitor de Proyectos
-# Lee el Excel de Google Drive y actualiza la página web
+# Lee una copia local cacheada (CSV) del Google Sheet "Dashboard
+# Proyectos" (descargada por separado vía el conector de Google
+# Drive antes de correr este script) y actualiza la página web.
 # ============================================================
 
-$ExcelPath = "G:\Mi unidad\5. Estudios\Dashboard Proyectos.xlsx"
-$HtmlPath  = "C:\Users\tira1\index.html"
+$CsvPath  = "C:\Users\tira1\Dashboard Proyectos (cache).csv"
+$HtmlPath = "C:\Users\tira1\index.html"
 
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -12,43 +14,46 @@ Write-Host "║   CINSA - Actualizador de Proyectos      ║" -ForegroundColor C
 Write-Host "╚══════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 
-# ── 1. Verificar que el archivo Excel existe
-if (-not (Test-Path $ExcelPath)) {
-    Write-Host "❌ No se encontró el archivo Excel en Google Drive." -ForegroundColor Red
-    Write-Host "   Verifica que Google Drive esté sincronizado." -ForegroundColor Yellow
+# ── 1. Verificar que el CSV cacheado existe
+if (-not (Test-Path $CsvPath)) {
+    Write-Host "❌ No se encontró la copia local cacheada del CSV." -ForegroundColor Red
+    Write-Host "   Debe descargarse primero desde Google Drive antes de correr este script." -ForegroundColor Yellow
     Read-Host "Presiona Enter para salir"
     exit
 }
 
-Write-Host "✅ Excel encontrado: $ExcelPath" -ForegroundColor Green
+Write-Host "✅ CSV encontrado: $CsvPath" -ForegroundColor Green
 
-# ── 2. Abrir Excel y leer datos
-Write-Host "📖 Leyendo datos del Excel..." -ForegroundColor Yellow
+# ── 2. Leer y parsear el CSV
+# Columnas (fila de encabezado real, fila 2 del CSV):
+# 1 Fecha Adjudicada, 2 ID(ncontrato), 3 CC, 4 Proyecto, 5 Tipo, 6 Unidades,
+# 7 Monto Contrato, 8 Plazo, 9 Inicio, 10 Termino, 11 Avance Programado,
+# 12 % Avance real, 13-16 Facturado Real (por año), 17 Total Facturado, 18 % Facturado
+Write-Host "📖 Leyendo datos del CSV..." -ForegroundColor Yellow
 
 try {
-    $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $false
-    $excel.DisplayAlerts = $false
-    $wb = $excel.Workbooks.Open($ExcelPath)
-    $ws = $wb.Sheets.Item(1)
+    $headers = 1..18 | ForEach-Object { "c$_" }
+    $dataLines = Get-Content -Path $CsvPath -Encoding UTF8 | Select-Object -Skip 2
+    $csvRows = $dataLines | ConvertFrom-Csv -Header $headers
 
     $proyectos = @()
-    $row = 3  # Los datos empiezan en la fila 3 (fila 1 es título, fila 2 es encabezados)
     $id = 1
 
-    while ($true) {
-        $nombre = $ws.Cells($row, 3).Text.Trim()
+    foreach ($r in $csvRows) {
+        $nombre = ($r.c4 -as [string])
+        if ($nombre) { $nombre = $nombre.Trim() }
         if ([string]::IsNullOrEmpty($nombre) -or $nombre -eq "Total Neto" -or $nombre -eq "Total Bruto") { break }
 
-        $anioRaw  = $ws.Cells($row, 1).Text.Trim()
-        $ncontrato= $ws.Cells($row, 2).Text.Trim()
-        $tipoRaw  = $ws.Cells($row, 4).Text.Trim()
-        $contratoRaw = ($ws.Cells($row, 6).Text.Trim()) -replace '[\.\$ ,]',''
-        $plazoRaw = $ws.Cells($row, 7).Text.Trim()
-        $inicioRaw= $ws.Cells($row, 8).Text.Trim()
-        $terminoRaw=$ws.Cells($row, 9).Text.Trim()
-        $avanceRaw= ($ws.Cells($row, 11).Text.Trim()) -replace '[%\s]',''
-        $facturadoRaw = ($ws.Cells($row, 16).Text.Trim()) -replace '[\.\$ ,]',''
+        $anioRaw     = ($r.c1  -as [string]).Trim()
+        $ncontrato   = ($r.c2  -as [string]).Trim()
+        $cc          = ($r.c3  -as [string]).Trim()
+        $tipoRaw     = ($r.c5  -as [string]).Trim()
+        $contratoRaw = (($r.c7  -as [string]).Trim()) -replace '[\.\$ ,]',''
+        $plazoRaw    = ($r.c8  -as [string]).Trim()
+        $inicioRaw   = ($r.c9  -as [string]).Trim()
+        $terminoRaw  = ($r.c10 -as [string]).Trim()
+        $avanceRaw   = ((($r.c12 -as [string]).Trim()) -replace '[%\s]','')
+        $facturadoRaw= (($r.c17 -as [string]).Trim()) -replace '[\.\$ ,]',''
 
         # Mapear tipo
         $tipo = switch -Wildcard ($tipoRaw) {
@@ -71,10 +76,22 @@ try {
         # Ubicación = nombre del proyecto (se puede ajustar)
         $ubicacion = $nombre
 
+        # Fechas: el CSV las exporta como M/D/YYYY; la web espera DD-MM-YYYY
+        function ConvertFecha($raw) {
+            if ($raw -match '^(\d{1,2})/(\d{1,2})/(\d{4})$') {
+                $mm = [int]$matches[1]; $dd = [int]$matches[2]; $yyyy = $matches[3]
+                return "{0:D2}-{1:D2}-{2}" -f $dd, $mm, $yyyy
+            }
+            return $raw
+        }
+        $inicioFmt  = if ($inicioRaw)  { ConvertFecha $inicioRaw }  else { "" }
+        $terminoFmt = if ($terminoRaw) { ConvertFecha $terminoRaw } else { "" }
+
         $proyectos += [PSCustomObject]@{
             id         = $id
             anio       = $anio
             ncontrato  = if ($ncontrato) { $ncontrato } else { "—" }
+            cc         = $cc
             nombre     = $nombre
             tipo       = $tipo
             estado     = $estado
@@ -83,22 +100,23 @@ try {
             facturado  = $facturado
             avance     = $avance
             plazo      = $plazo
-            inicio     = if ($inicioRaw) { $inicioRaw } else { "—" }
-            termino    = if ($terminoRaw) { $terminoRaw } else { "—" }
+            inicio     = if ($inicioFmt) { $inicioFmt } else { "—" }
+            termino    = if ($terminoFmt) { $terminoFmt } else { "—" }
         }
 
         $id++
-        $row++
     }
 
-    $wb.Close($false)
-    $excel.Quit()
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
-
-    Write-Host "✅ Leídos $($proyectos.Count) proyectos del Excel" -ForegroundColor Green
+    Write-Host "✅ Leídos $($proyectos.Count) proyectos del CSV" -ForegroundColor Green
 
 } catch {
-    Write-Host "❌ Error al leer el Excel: $_" -ForegroundColor Red
+    Write-Host "❌ Error al leer el CSV: $_" -ForegroundColor Red
+    Read-Host "Presiona Enter para salir"
+    exit
+}
+
+if ($proyectos.Count -eq 0) {
+    Write-Host "❌ No se leyó ningún proyecto. Abortando para no sobrescribir la web con datos vacíos." -ForegroundColor Red
     Read-Host "Presiona Enter para salir"
     exit
 }
@@ -110,7 +128,8 @@ $jsItems = @()
 foreach ($p in $proyectos) {
     $plazoJs = if ($p.plazo -match '^\d') { $p.plazo } else { "null" }
 
-    $item = "  { id:$($p.id), anio:$($p.anio), ncontrato:'$($p.ncontrato -replace "'","\\'")', nombre:'$($p.nombre -replace "'","\\'")', tipo:'$($p.tipo)', estado:'$($p.estado)', ubicacion:'$($p.ubicacion -replace "'","\\'")', contrato:$($p.contrato), facturado:$($p.facturado), avance:$($p.avance), inicio:'$($p.inicio)', termino:'$($p.termino)', plazo:$plazoJs }"
+    $ccJs = if ($p.cc) { "cc:'$($p.cc)', " } else { "" }
+    $item = "  { id:$($p.id), $ccJs" + "anio:$($p.anio), ncontrato:'$($p.ncontrato -replace "'","\\'")', nombre:'$($p.nombre -replace "'","\\'")', tipo:'$($p.tipo)', estado:'$($p.estado)', ubicacion:'$($p.ubicacion -replace "'","\\'")', contrato:$($p.contrato), facturado:$($p.facturado), avance:$($p.avance), inicio:'$($p.inicio)', termino:'$($p.termino)', plazo:$plazoJs }"
     $jsItems += $item
 }
 

@@ -516,6 +516,20 @@
 
     <!-- LICITACIONES -->
     <div id="view-licitaciones" class="view">
+      <div class="section-header">
+        <h3>Licitaciones Publicadas (Abiertas)</h3>
+      </div>
+      <div class="kpi-grid" id="kpi-publicadas" style="margin-bottom:14px"></div>
+      <div class="table-wrap" style="margin-bottom:26px">
+        <table>
+          <thead><tr>
+            <th>N° Licitación</th><th>Nombre</th><th>Organismo</th><th>Rubro</th>
+            <th>Presupuesto</th><th>Cierre oferta</th><th>Días</th>
+          </tr></thead>
+          <tbody id="tbody-lic-publicadas"></tbody>
+        </table>
+      </div>
+
       <div class="kpi-grid" id="kpi-licitaciones"></div>
 
       <div class="charts-row">
@@ -1024,7 +1038,54 @@ function licRenderYearChart() {
     `<span><strong style="color:var(--accent-green)">${y.pct}%</strong> adjudicación en ${y.anio}</span>`
   ).join('');
 }
+function licDiasBadge(dias) {
+  let color, texto;
+  if (dias < 0) { color = 'var(--accent-red)'; texto = `Vencida (${Math.abs(dias)} d)`; }
+  else if (dias === 0) { color = 'var(--accent-red)'; texto = 'Cierra hoy'; }
+  else if (dias <= 3) { color = 'var(--accent-red)'; texto = `${dias} d`; }
+  else if (dias <= 7) { color = '#f5c518'; texto = `${dias} d`; }
+  else { color = 'var(--accent-green)'; texto = `${dias} d`; }
+  return `<span style="font-weight:700;color:${color}">${texto}</span>`;
+}
+function licRenderPublicadas() {
+  const now = Date.now();
+  const items = (LIC.abiertas || []).map(i => ({ ...i, dias: Math.ceil((i.fechaCierre - now) / 86400000) }));
+  const cerrando7 = items.filter(i => i.dias >= 0 && i.dias <= 7).length;
+  const presTotal = items.reduce((s, i) => s + i.presupuesto, 0);
+  document.getElementById('kpi-publicadas').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="label">Licitaciones Publicadas</div>
+      <div class="value">${items.length}</div>
+      <div class="sub">actualmente abiertas</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Cierran en 7 días</div>
+      <div class="value">${cerrando7}</div>
+      <div class="sub">requieren atención pronto</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Presupuesto en Juego</div>
+      <div class="value">${fmtM(presTotal)}</div>
+      <div class="sub">suma de presupuestos publicados</div>
+    </div>
+  `;
+  document.getElementById('tbody-lic-publicadas').innerHTML = items.length ? items.map(i => {
+    const f = new Date(i.fechaCierre);
+    const fTxt = f.toLocaleDateString('es-CL') + ' ' + f.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    return `
+    <tr>
+      <td>${i.nro}</td>
+      <td>${i.nombre}</td>
+      <td>${i.organismo}</td>
+      <td>${i.tipo}</td>
+      <td>${fmtM(i.presupuesto)}</td>
+      <td>${fTxt}</td>
+      <td>${licDiasBadge(i.dias)}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">Sin licitaciones publicadas registradas</td></tr>';
+}
 function renderLicitaciones() {
+  licRenderPublicadas();
   licRenderKpis();
   licRenderYearChart();
   licRenderRubroPerf();
@@ -2557,8 +2618,12 @@ async function fetchProyectosCSV() {
 // ══════════════════════════════════════════════════════
 const LIC_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSEooXsnmgoqS26qiFGRQsQJqcYINv6tzHWRsTGRssf3T4nkm-5CDA2Qzle7tqmv5iFzaPtgWL9kJVZ/pub?gid=2097258325&single=true&output=csv';
 const LIC_HEADER_MATCH = {
+  'nro. de la adquisicion': 'Nro',
   'nombre de la adquisicion': 'Nombre',
+  'demandante': 'Organismo',
   'fecha de publicacion licitacion': 'FechaPub',
+  'fecha de cierre de recepcion de la oferta': 'FechaCierre',
+  'estado mercado publico': 'Estado',
   'resultado cinsa': 'ResultadoCINSA',
   'presupuesto bruto': 'PresupuestoBruto',
   'monto neto adjudicado': 'MontoNetoAdj',
@@ -2593,6 +2658,21 @@ function licParseFecha(s) {
   let year = parseInt(m[3], 10);
   if (m[3].length <= 2) year += 2000;
   return { year };
+}
+// Parsea fecha+hora completa (dd/mm/aa[aa] hh:mm) a un objeto Date real,
+// usado para calcular los dias restantes de las licitaciones publicadas.
+function licParseFechaHora(s) {
+  if (!s) return null;
+  const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (!m) return null;
+  let year = parseInt(m[3], 10);
+  if (m[3].length <= 2) year += 2000;
+  const month = parseInt(m[1], 10) - 1;
+  const day = parseInt(m[2], 10);
+  const hour = m[4] ? parseInt(m[4], 10) : 0;
+  const min = m[5] ? parseInt(m[5], 10) : 0;
+  const d = new Date(year, month, day, hour, min);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 // Parser CSV completo (no linea por linea) — respeta comas y saltos de linea
@@ -2703,8 +2783,12 @@ function licCargarCSV(text) {
   }
 
   return filas.map(campos => ({
+    Nro: campos[colIdx.Nro] || '',
     Nombre: campos[colIdx.Nombre] || '',
+    Organismo: campos[colIdx.Organismo] || '',
     FechaPub: campos[colIdx.FechaPub] || '',
+    FechaCierre: campos[colIdx.FechaCierre] || '',
+    Estado: campos[colIdx.Estado] || '',
     ResultadoCINSA: campos[colIdx.ResultadoCINSA] || '',
     PresupuestoBruto: campos[colIdx.PresupuestoBruto] || '',
     MontoNetoAdj: campos[colIdx.MontoNetoAdj] || '',
@@ -2762,13 +2846,23 @@ function licComputeAll(rawRows) {
     // año de publicación -- una licitación puede publicarse un año y
     // adjudicarse recién el siguiente.
     let anio = fecha ? fecha.year : null;
-    const anioAdj = parseInt((r.AnioAdjudicacion || '').trim(), 10);
+    const anioAdjTxt = (r.AnioAdjudicacion || '').trim();
+    const anioAdj = parseInt(anioAdjTxt, 10);
     if (!isNaN(anioAdj) && anioAdj >= 2023 && anioAdj <= 2026) anio = anioAdj;
+    // la columna "Año adjudicación" a veces se reutiliza para anotar una
+    // fecha de cierre reprogramada (Mercado Público posterga el cierre); si
+    // su contenido parsea como fecha, esa fecha manda sobre "Fecha de cierre".
+    const fechaCierre = licParseFechaHora(anioAdjTxt) || licParseFechaHora(r.FechaCierre);
     return {
       anio,
       resultado, tipo, empresa,
       presupuesto: licCsvNum(r.PresupuestoBruto),
       montoNeto: licCsvNum(r.MontoNetoAdj),
+      nro: (r.Nro || '').trim(),
+      nombre: (r.Nombre || '').trim(),
+      organismo: (r.Organismo || '').trim(),
+      estado: (r.Estado || '').trim(),
+      fechaCierre,
     };
   }).filter(r => r.anio && r.anio >= 2023 && r.anio <= 2026);
 
@@ -2835,6 +2929,16 @@ function licComputeAll(rawRows) {
     return { tipo: t, participadas: dt.length, adjudicadas: aj, pct: dt.length ? Math.round((aj / dt.length) * 1000) / 10 : 0 };
   }).sort((a, b) => b.participadas - a.participadas);
 
+  // Licitaciones actualmente publicadas (abiertas, aun sin resolver), con su
+  // fecha de cierre, para el visor de "Licitaciones Publicadas".
+  const abiertas = rows
+    .filter(r => r.estado.toLowerCase() === 'publicada' && r.fechaCierre)
+    .map(r => ({
+      nro: r.nro, nombre: r.nombre, organismo: r.organismo, tipo: r.tipo,
+      presupuesto: r.presupuesto, fechaCierre: r.fechaCierre.getTime(),
+    }))
+    .sort((a, b) => a.fechaCierre - b.fechaCierre);
+
   const [top_n, top_monto] = licBuildRanking(decididas);
 
   const comp_by_tipo = {}, comp_by_tipo_monto = {};
@@ -2860,6 +2964,7 @@ function licComputeAll(rawRows) {
     comp_by_tipo, comp_by_tipo_monto,
     comp_by_year, comp_by_year_monto,
     comp_by_year_tipo, comp_by_year_tipo_monto,
+    abiertas,
   };
 }
 
