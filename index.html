@@ -530,6 +530,24 @@
         </table>
       </div>
 
+      <div class="section-header">
+        <h3>Licitaciones En Evaluación (Pendientes de Resolución)</h3>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">
+        Licitaciones en que CINSA presentó oferta, ya cerradas, cuyo resultado aún no está definido
+        (no han sido adjudicadas, declaradas desiertas ni revocadas).
+      </p>
+      <div class="kpi-grid" id="kpi-pendientes" style="margin-bottom:14px"></div>
+      <div class="table-wrap" style="margin-bottom:26px">
+        <table>
+          <thead><tr>
+            <th>N° Licitación</th><th>Nombre</th><th>Organismo</th><th>Rubro</th>
+            <th>Estado</th><th>Presupuesto</th><th>Valor Oferta (Neto)</th>
+          </tr></thead>
+          <tbody id="tbody-lic-pendientes"></tbody>
+        </table>
+      </div>
+
       <div class="kpi-grid" id="kpi-licitaciones"></div>
 
       <div class="charts-row">
@@ -1087,8 +1105,41 @@ function licRenderPublicadas() {
     </tr>`;
   }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">Sin licitaciones publicadas registradas</td></tr>';
 }
+function licRenderPendientes() {
+  const items = LIC.pendientes || [];
+  const valorTotal = items.reduce((s, i) => s + i.ofertaNeto, 0);
+  const presTotal = items.reduce((s, i) => s + i.presupuesto, 0);
+  document.getElementById('kpi-pendientes').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="label">En Evaluación</div>
+      <div class="value">${items.length}</div>
+      <div class="sub">licitaciones pendientes de resultado</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="label">Valor Ofertado (Neto)</div>
+      <div class="value">${fmtM(valorTotal)}</div>
+      <div class="sub">suma de ofertas presentadas por CINSA</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Presupuesto en Juego</div>
+      <div class="value">${fmtM(presTotal)}</div>
+      <div class="sub">suma de presupuestos de estas licitaciones</div>
+    </div>
+  `;
+  document.getElementById('tbody-lic-pendientes').innerHTML = items.length ? items.map(i => `
+    <tr>
+      <td>${i.nro}</td>
+      <td>${i.nombre}</td>
+      <td>${i.organismo}</td>
+      <td>${i.tipo}</td>
+      <td>${i.estado}</td>
+      <td>${fmtM(i.presupuesto)}</td>
+      <td>${i.ofertaNeto ? fmtM(i.ofertaNeto) : '—'}</td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">Sin licitaciones pendientes de resolución</td></tr>';
+}
 function renderLicitaciones() {
   licRenderPublicadas();
+  licRenderPendientes();
   licRenderKpis();
   licRenderYearChart();
   licRenderRubroPerf();
@@ -2632,6 +2683,8 @@ const LIC_HEADER_MATCH = {
   'estado mercado publico': 'Estado',
   'resultado cinsa': 'ResultadoCINSA',
   'presupuesto bruto': 'PresupuestoBruto',
+  'oferta neto cinsa': 'OfertaNetoCINSA',
+  'oferta bruto cinsa': 'OfertaBrutoCINSA',
   'monto neto adjudicado': 'MontoNetoAdj',
   'empresa adjudicada': 'EmpresaAdj',
   'tipo': 'Tipo',
@@ -2797,6 +2850,8 @@ function licCargarCSV(text) {
     Estado: campos[colIdx.Estado] || '',
     ResultadoCINSA: campos[colIdx.ResultadoCINSA] || '',
     PresupuestoBruto: campos[colIdx.PresupuestoBruto] || '',
+    OfertaNetoCINSA: campos[colIdx.OfertaNetoCINSA] || '',
+    OfertaBrutoCINSA: campos[colIdx.OfertaBrutoCINSA] || '',
     MontoNetoAdj: campos[colIdx.MontoNetoAdj] || '',
     EmpresaAdj: campos[colIdx.EmpresaAdj] || '',
     Tipo: campos[colIdx.Tipo] || '',
@@ -2861,6 +2916,8 @@ function licComputeAll(rawRows) {
       resultado, tipo, empresa,
       presupuesto: licCsvNum(r.PresupuestoBruto),
       montoNeto: licCsvNum(r.MontoNetoAdj),
+      ofertaNeto: licCsvNum(r.OfertaNetoCINSA),
+      ofertaBruto: licCsvNum(r.OfertaBrutoCINSA),
       nro: (r.Nro || '').trim(),
       nombre: (r.Nombre || '').trim(),
       organismo: (r.Organismo || '').trim(),
@@ -2942,6 +2999,23 @@ function licComputeAll(rawRows) {
     }))
     .sort((a, b) => a.fechaCierre - b.fechaCierre);
 
+  // Licitaciones en que CINSA ofertó y que ya cerraron pero aun no se
+  // resuelven (no estan Adjudicada, Desierta ni Revocada) -- pendientes de
+  // resultado, con el valor de la oferta presentada.
+  const LIC_ESTADOS_RESUELTOS = ['adjudicada', 'desierta', 'revocada'];
+  const pendientes = participamos
+    .filter(r => {
+      const e = r.estado.toLowerCase();
+      return e && e !== 'publicada' && !LIC_ESTADOS_RESUELTOS.includes(e) && r.fechaCierre;
+    })
+    .map(r => ({
+      nro: r.nro, nombre: r.nombre, organismo: r.organismo, tipo: r.tipo,
+      estado: r.estado, presupuesto: r.presupuesto,
+      ofertaNeto: r.ofertaNeto, ofertaBruto: r.ofertaBruto,
+      fechaCierre: r.fechaCierre.getTime(),
+    }))
+    .sort((a, b) => a.fechaCierre - b.fechaCierre);
+
   const [top_n, top_monto] = licBuildRanking(decididas);
 
   const comp_by_tipo = {}, comp_by_tipo_monto = {};
@@ -2967,7 +3041,7 @@ function licComputeAll(rawRows) {
     comp_by_tipo, comp_by_tipo_monto,
     comp_by_year, comp_by_year_monto,
     comp_by_year_tipo, comp_by_year_tipo_monto,
-    abiertas,
+    abiertas, pendientes,
   };
 }
 
