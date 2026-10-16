@@ -2623,12 +2623,13 @@ async function fetchProyectosCSV() {
     const parsed = [];
     for (let i = 2; i < lines.length; i++) {
       const cols = parseCSVLine(lines[i]);
-      const anio = parseInt(cols[0]);
-      if (!anio || anio < 2020) break;
+      const rawNombre = (cols[3] || '').trim();
+      if (!rawNombre || rawNombre === 'Total Neto' || rawNombre === 'Total Bruto') break;
+      let anio = parseInt(cols[0]);
+      if (!anio || anio < 2020) anio = new Date().getFullYear();
       const rawCC  = (cols[2] || '').trim();
-      if (!rawCC) break;
       const cc     = rawCC;
-      const nombre = CC_MAP[cc] || rawCC;
+      const nombre = cc ? (CC_MAP[cc] || rawNombre) : rawNombre;
       const avanceProg = csvPct(cols[10]);         // col K: avance programado %
       const avance    = csvPct(cols[11]);          // col L: avance real %
       const contrato  = csvNum(cols[6]);             // col G: valor directo en CLP
