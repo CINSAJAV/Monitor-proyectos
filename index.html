@@ -2731,8 +2731,8 @@ function licParseFechaHora(s) {
   if (!m) return null;
   let year = parseInt(m[3], 10);
   if (m[3].length <= 2) year += 2000;
-  const month = parseInt(m[1], 10) - 1;
-  const day = parseInt(m[2], 10);
+  const month = parseInt(m[2], 10) - 1;
+  const day = parseInt(m[1], 10);
   const hour = m[4] ? parseInt(m[4], 10) : 0;
   const min = m[5] ? parseInt(m[5], 10) : 0;
   const d = new Date(year, month, day, hour, min);
