@@ -2887,7 +2887,7 @@ function licBuildRanking(subset) {
   const totalN = byN.length;
   const byNOut = byN.map((g, i) => ({ ...g, rank: i + 1, total: totalN }));
 
-  const byMonto = arr.filter(g => g.monto > 0 || g.isCinsa).sort((a, b) => b.monto - a.monto || b.n - a.n);
+  const byMonto = arr.filter(g => g.n > 0 || g.isCinsa).sort((a, b) => b.monto - a.monto || b.n - a.n);
   const totalM = byMonto.length;
   const byMontoOut = byMonto.map((g, i) => ({ ...g, rank: i + 1, total: totalM }));
 
