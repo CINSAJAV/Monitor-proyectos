@@ -1955,7 +1955,7 @@ function renderResumen() {
   document.getElementById('resumen-anual-cards').innerHTML =
     yrCard('2024 — Año completo', t24, '10 meses facturados') +
     yrCard('2025 — Año completo', t25, 'Ene – Dic 2025') +
-    yrCard('2026 — Acumulado YTD', t26, 'Ene – Ago 2026');
+    yrCard('2026 — Acumulado YTD', t26, 'Ene – Sep 2026');
 
   // ── Gráfico comparativo ──────────────────────────────
   if (chartResumen) chartResumen.destroy();
@@ -3013,15 +3013,15 @@ function licComputeAll(rawRows) {
   const pendientes = participamos
     .filter(r => {
       const e = r.estado.toLowerCase();
-      return e && e !== 'publicada' && !LIC_ESTADOS_RESUELTOS.includes(e) && r.fechaCierre;
+      return e && e !== 'publicada' && !LIC_ESTADOS_RESUELTOS.includes(e);
     })
     .map(r => ({
       nro: r.nro, nombre: r.nombre, organismo: r.organismo, tipo: r.tipo,
       estado: r.estado, presupuesto: r.presupuesto,
       ofertaNeto: r.ofertaNeto, ofertaBruto: r.ofertaBruto,
-      fechaCierre: r.fechaCierre.getTime(),
+      fechaCierre: r.fechaCierre ? r.fechaCierre.getTime() : null,
     }))
-    .sort((a, b) => a.fechaCierre - b.fechaCierre);
+    .sort((a, b) => (a.fechaCierre || Infinity) - (b.fechaCierre || Infinity));
 
   const [top_n, top_monto] = licBuildRanking(decididas);
 
