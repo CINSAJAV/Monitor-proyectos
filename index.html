@@ -2949,7 +2949,7 @@ function licComputeAll(rawRows) {
   rows.forEach(r => { if (r.empresa) r.empresa = canonical[r.empresa]; });
 
   rows.forEach(r => {
-    r.winner = r.resultado === 'Adjudicada' ? 'CINSA' : (r.empresa || null);
+    r.winner = (r.resultado === 'Adjudicada' || r.resultado === 'Aceptada') ? 'CINSA' : (r.empresa || null);
   });
 
   const participamos = rows.filter(r => r.resultado !== 'No Ofertada' && r.resultado !== 'Sin dato');
@@ -2957,7 +2957,7 @@ function licComputeAll(rawRows) {
   // licitaciones adjudicadas del rubro, haya o no ofertado CINSA -- muestra
   // quién domina el mercado en general, no solo contra quién competimos.
   const decididas = rows.filter(r => r.winner);
-  const ganamos = rows.filter(r => r.resultado === 'Adjudicada');
+  const ganamos = rows.filter(r => r.resultado === 'Adjudicada' || r.resultado === 'Aceptada');
 
   const kpi = {
     total_registros: rows.length,
@@ -2971,7 +2971,7 @@ function licComputeAll(rawRows) {
   const by_year = LIC_YEARS.map(y => {
     const dy = rows.filter(r => r.anio === y);
     const py = dy.filter(r => r.resultado !== 'No Ofertada' && r.resultado !== 'Sin dato');
-    const ay = dy.filter(r => r.resultado === 'Adjudicada');
+    const ay = dy.filter(r => r.resultado === 'Adjudicada' || r.resultado === 'Aceptada');
     return {
       anio: y, total: dy.length, participadas: py.length, adjudicadas: ay.length,
       pct: py.length ? Math.round((ay.length / py.length) * 1000) / 10 : 0,
@@ -2992,7 +2992,7 @@ function licComputeAll(rawRows) {
   const by_tipo = Object.keys(tipoCount).map(t => {
     const dt = participamos.filter(r => r.tipo === t);
     const fullT = rows.filter(r => r.tipo === t);
-    const aj = fullT.filter(r => r.resultado === 'Adjudicada').length;
+    const aj = fullT.filter(r => r.resultado === 'Adjudicada' || r.resultado === 'Aceptada').length;
     return { tipo: t, participadas: dt.length, adjudicadas: aj, pct: dt.length ? Math.round((aj / dt.length) * 1000) / 10 : 0 };
   }).sort((a, b) => b.participadas - a.participadas);
 
